@@ -1,0 +1,87 @@
+.reviewCard {
+  background-color: var(--body-bg) !important;
+  position: relative;
+}
+
+.reviewTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-roboto), sans-serif;
+}
+
+.reviewScore {
+  margin-left: var(--spacing-xs);
+  font-size: 0.9rem;
+  color: inherit;
+  font-family: var(--font-roboto), sans-serif;
+}
+
+.reviewText {
+  font-size: 0.95rem;
+  font-family: var(--font-roboto), sans-serif;
+}
+
+/* Review action buttons container */
+.reviewActions {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  display: flex;
+  gap: 6px;
+}
+
+/* Action buttons styles */
+.actionButton {
+  width: 30px;
+  height: 30px;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  padding: 0;
+}
+
+.actionButton:hover {
+  background-color: var(--hover-button);
+}
+
+.actionButton svg {
+  font-size: 14px;
+}
+
+/* New field for textarea editing */
+.reviewTextField {
+  width: 100%;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-roboto), sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: var(--spacing-xs);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.reviewTextField:focus,
+.reviewTextField:hover {
+  border-color: var(--hover-button);
+  box-shadow: var(--shadow-md);
+}
+
+/* Editable stars styling */
+.ratingStars {
+  display: flex;
+  align-items: center;
+}
+
+.editableStar {
+  cursor: pointer;
+  margin-right: 2px;
+  transition: transform 0.1s ease;
+}
+
+.editableStar:hover {
+  transform: scale(1.2);
+}

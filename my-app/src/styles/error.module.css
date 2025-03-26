@@ -1,0 +1,56 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    padding-top: 5rem;
+    background-color: var(--body-bg);
+  }
+  
+  .content {
+    text-align: center;
+    max-width: 28rem;
+  }
+  
+  .title {
+    color: var(--error-header-text);
+    font-weight: var(--font-weight-bold);
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .message {
+    color: var(--header-text);
+    margin-bottom: 1.5rem;
+  }
+  
+  .errorId {
+    margin-bottom: 2rem;
+    font-size: 0.875rem;
+    opacity: 0.7;
+  }
+  
+  .buttonContainer {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+  
+  .button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .button:hover {
+    background-color: var(--hover-button);
+  }

@@ -1,0 +1,129 @@
+@startuml
+
+title API Routes Sequence Diagram (Design Phase)
+autonumber
+
+participant Client as "Client Side"
+participant EmbedAPI as "Embedding API"
+participant ChatAPI as "Chat API"
+participant SummaryAPI as "Review Summary API"
+participant AIUtil as "AI Utility"
+participant DBUtil as "Database Utility"
+participant AuthUtil as "Auth Utility"
+participant Supabase
+participant OpenAI
+
+' Embedding Generation API Flow
+Client -> EmbedAPI: Request embedding creation
+EmbedAPI -> AuthUtil: Validate request authorization
+AuthUtil --> EmbedAPI: Return auth status
+
+alt authorized request
+    EmbedAPI -> AIUtil: generateEmbedding(text)
+    AIUtil -> OpenAI: Create embedding vector
+    OpenAI --> AIUtil: Return embedding
+    AIUtil --> EmbedAPI: Return embedding vector
+    
+    alt type is "review"
+        EmbedAPI -> DBUtil: storeReviewEmbedding(reviewId, embedding)
+        DBUtil -> Supabase: Save to review_embeddings
+        Supabase --> DBUtil: Confirm storage
+        
+        EmbedAPI -> DBUtil: markSummaryForUpdate(listingId)
+        DBUtil -> Supabase: Update listing_summaries
+        Supabase --> DBUtil: Confirm update
+    else type is "listing"
+        EmbedAPI -> DBUtil: storeListingEmbedding(listingId, embedding)
+        DBUtil -> Supabase: Save to listing_embeddings
+        Supabase --> DBUtil: Confirm storage
+    end
+    
+    DBUtil --> EmbedAPI: Return success
+    EmbedAPI --> Client: Return success response
+else unauthorized
+    EmbedAPI --> Client: Return 401 error
+end
+
+' Chat API Flow
+Client -> ChatAPI: Send message with session context
+
+ChatAPI -> AuthUtil: Check session token
+AuthUtil --> ChatAPI: Return auth status
+
+alt session ID is temporary
+    alt user authenticated
+        ChatAPI -> DBUtil: createPersistentSession(userId)
+        DBUtil -> Supabase: Create chat session
+        Supabase --> DBUtil: Return new session ID
+        DBUtil --> ChatAPI: Return session ID
+    end
+end
+
+' Save user message
+ChatAPI -> DBUtil: saveMessage(sessionId, "user", message)
+DBUtil -> Supabase: Store message
+Supabase --> DBUtil: Confirm storage
+
+' Process message with AI
+ChatAPI -> AIUtil: getChatEmbedding(message)
+AIUtil -> OpenAI: Create embedding vector
+OpenAI --> AIUtil: Return embedding
+AIUtil --> ChatAPI: Return query embedding
+
+' Get context for chat
+ChatAPI -> DBUtil: findRelevantListings(embedding)
+DBUtil -> Supabase: Perform vector similarity search
+Supabase --> DBUtil: Return relevant listings
+DBUtil --> ChatAPI: Return context listings
+
+ChatAPI -> DBUtil: findSimilarListings(mentionedIds)
+DBUtil -> Supabase: Query similar listings
+Supabase --> DBUtil: Return similar listings
+DBUtil --> ChatAPI: Return related listings
+
+' Generate response
+ChatAPI -> AIUtil: generateChatResponse(message, context, history)
+AIUtil -> OpenAI: Generate AI response
+OpenAI --> AIUtil: Return response text
+AIUtil --> ChatAPI: Return formatted response
+
+' Save bot response
+ChatAPI -> DBUtil: saveMessage(sessionId, "bot", response)
+DBUtil -> Supabase: Store message
+Supabase --> DBUtil: Confirm storage
+
+ChatAPI --> Client: Return response and session ID
+
+' Review Summary API Flow
+Client -> SummaryAPI: Request review summary
+
+SummaryAPI -> DBUtil: checkExistingSummary(listingId)
+DBUtil -> Supabase: Query summary record
+Supabase --> DBUtil: Return summary data
+
+alt valid summary exists
+    DBUtil --> SummaryAPI: Return cached summary
+    SummaryAPI --> Client: Return existing summary
+else need new summary
+    SummaryAPI -> DBUtil: getListingReviews(listingId)
+    DBUtil -> Supabase: Query reviews
+    Supabase --> DBUtil: Return review data
+    DBUtil --> SummaryAPI: Return reviews
+    
+    alt reviews available
+        SummaryAPI -> AIUtil: generateReviewSummary(reviews)
+        AIUtil -> OpenAI: Process review content
+        OpenAI --> AIUtil: Return summary with pros/cons
+        AIUtil --> SummaryAPI: Return structured summary
+        
+        SummaryAPI -> DBUtil: storeSummary(listingId, summary)
+        DBUtil -> Supabase: Save to listing_summaries
+        Supabase --> DBUtil: Confirm storage
+        
+        SummaryAPI --> Client: Return generated summary
+    else no reviews
+        SummaryAPI --> Client: Return empty summary
+    end
+end
+
+@enduml

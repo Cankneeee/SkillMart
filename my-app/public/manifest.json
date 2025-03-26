@@ -1,0 +1,52 @@
+{
+    "name": "SkillMart - Learn, Share, Trade Skills",
+    "short_name": "SkillMart",
+    "description": "A skills-sharing marketplace where passionate individuals connect to exchange knowledge and services.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "orientation": "any",
+    "categories": ["education", "freelance", "skills", "learning"],
+    "icons": [
+      {
+        "src": "/icons/android-chrome-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "/icons/android-chrome-512x512.png", 
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "/icons/apple-touch-icon.png",
+        "sizes": "180x180",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "/icons/maskable-icon.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      }
+    ],
+    "prefer_related_applications": false,
+    "lang": "en-US",
+    "scope": "/",
+    "shortcuts": [
+      {
+        "name": "Create Skill Listing",
+        "url": "/create-listing",
+        "icons": [{ "src": "/icons/android-chrome-192x192.png", "sizes": "192x192" }]
+      },
+      {
+        "name": "My Skills",
+        "url": "/my-skills",
+        "icons": [{ "src": "/icons/android-chrome-192x192.png", "sizes": "192x192" }]
+      }
+    ]
+  }

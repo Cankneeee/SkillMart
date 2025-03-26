@@ -1,0 +1,39 @@
+/* Offcanvas Menu */
+.offcanvas {
+  background-color: var(--body-bg) !important;
+}
+  
+/* Offcanvas Title */
+.offcanvasTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--header-text);
+}
+  
+/* Offcanvas Navigation Links */
+.offcanvasNav {
+  display: flex;
+  flex-direction: column;
+  padding-left: 10px;
+}
+  
+/* Link Styles */
+.offcanvasLink {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--header-text);
+  padding: 12px 16px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 5px;
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+  
+/* Hover Effect */
+.offcanvasLink:hover {
+  color: var(--button-text) !important;
+  background-color: var(--hover-button) !important;
+  text-decoration: none;
+}

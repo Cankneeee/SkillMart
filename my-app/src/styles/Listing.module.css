@@ -1,0 +1,307 @@
+.pageContainer {
+  width: 100%;
+  padding-left: 60px;
+  padding-right: 60px;
+  background-color: var(--body-bg);
+  margin: 0;
+  padding-top: 0;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.listingHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-top: 0;
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-montserrat), sans-serif;
+  margin: var(--spacing-md) 0;
+}
+
+/* Title input field styling */
+.titleInput {
+  font-size: 2rem;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-montserrat), sans-serif;
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+  max-width: 800px;
+}
+
+.titleInput:focus,
+.titleInput:hover {
+  border-color: var(--hover-button);
+  box-shadow: var(--shadow-md);
+}
+
+.actionButtons {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.byInfo {
+  display: flex;
+  align-items: center;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.byIcon {
+  margin-right: var(--spacing-xs);
+}
+
+.byText {
+  font-size: var(--font-size-base);
+  font-family: var(--font-roboto), sans-serif;
+}
+
+/* Image wrapper and edit button */
+.imageWrapper {
+  width: 100%;
+  margin-bottom: var(--spacing-xl);
+  position: relative;
+  display: block;
+  background-color: var(--body-bg);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-height: 250px;
+}
+
+.listingImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 500px;
+  background-color: var(--body-bg);
+  border-radius: var(--radius-md);
+  margin: 0;
+}
+
+.listingImageContain {
+  object-fit: contain;
+}
+
+.listingImageCover {
+  object-fit: cover;
+}
+
+.editImageButton {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border-radius: var(--radius-full);
+  padding: 10px;
+  font-size: var(--font-size-base);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: background-color 0.2s ease;
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+}
+
+.editImageButton:hover {
+  background-color: var(--hover-button);
+}
+
+.removeImageButton {
+  position: absolute;
+  bottom: 15px;
+  right: 80px;
+  background-color: var(--error-button);
+  color: var(--button-text);
+  border-radius: var(--radius-full);
+  padding: 10px;
+  font-size: var(--font-size-base);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: background-color 0.2s ease;
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+}
+
+.removeImageButton:hover {
+  background-color: darken(var(--error-button), 10%);
+}
+
+/* Author profile image styles */
+.authorImageWrapper {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: var(--spacing-xs);
+}
+
+.authorImage {
+  object-fit: cover;
+}
+
+/* Action buttons styles */
+.actionButton {
+  width: 45px;
+  height: 45px;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.actionButton:hover {
+  background-color: var(--hover-button);
+}
+
+/* Edit field styling */
+.editField {
+  width: 100%;
+  padding: var(--spacing-xs);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-roboto), sans-serif;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.editField:focus,
+.editField:hover {
+  border-color: var(--hover-button);
+  box-shadow: var(--shadow-md);
+}
+
+/* Textarea specific styles */
+.editField[rows] {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Style the dropdown itself */
+.sortSelect {
+  max-width: 150px;
+  background-color: var(--body-bg) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px !important;
+  font-size: 0.9rem;
+  color: var(--header-text);
+  box-shadow: none !important;
+}
+
+.sortSelect:hover,
+.sortSelect:focus {
+  border-color: var(--hover-button) !important;
+}
+
+/* Custom styling for dropdown menu */
+.dropdownMenu {
+  background-color: var(--body-bg) !important;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm) !important;
+  padding: 0;
+  margin-top: var(--spacing-xs) !important;
+  min-width: 150px;
+}
+
+/* Dropdown item styling */
+.dropdownItem {
+  padding: var(--spacing-xs) var(--spacing-md) !important;
+  color: var(--header-text) !important;
+  font-size: 0.9rem !important;
+  font-weight: var(--font-weight-normal) !important;
+  font-family: var(--font-roboto), sans-serif;
+  transition: background-color 0.3s ease-in-out;
+}
+
+/* Hover state */
+.dropdownItem:hover,
+.dropdownItem:focus {
+  background-color: var(--hover-button) !important;
+  color: var(--button-text) !important;
+}
+
+/* Active/Selected state - Removed :global() */
+.dropdownItem:active,
+.dropdownItem.active {
+  background-color: var(--body-bg) !important;
+  color: var(--hover-header) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 992px) {
+  .pageContainer {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageContainer {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  .titleInput {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .pageContainer {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .titleInput {
+    font-size: 1.5rem;
+  }
+  
+  .actionButton {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .titleRow {
+    flex-wrap: wrap;
+  }
+  
+  .actionButtons {
+    margin-top: 10px;
+  }
+}

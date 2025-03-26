@@ -1,0 +1,79 @@
+/* Sign Up Form Fullscreen Background */
+.container {
+    width: 100%;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--body-bg);
+}
+
+/* Heading */
+.heading {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--header-text);
+    margin-bottom: 20px;
+}
+
+/* Form Styling */
+.form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 350px;
+}
+
+/* Input Fields */
+.input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Active state for input fields */
+.input:focus {
+    border-color: #7E57C2;
+    outline: none;
+    box-shadow: 0 0 5px rgba(126, 87, 194, 0.5);
+}
+
+/* Error State for Input Fields */
+.inputError {
+    border-color: #D90429 !important;
+    background-color: rgba(217, 4, 41, 0.1);
+}
+
+/* Sign Up Button */
+.button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    font-size: 1rem;
+}
+
+.button:hover {
+    background-color: var(--hover-button);
+}
+
+/* Log In Link */
+.link {
+    margin-top: 15px;
+    font-size: 0.9rem;
+}
+
+/* Error Message */
+.errorMessage {
+    color: #9A031E;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}

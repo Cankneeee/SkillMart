@@ -1,0 +1,121 @@
+@startuml
+
+title Listing Management Sequence Diagram (Design Phase)
+autonumber
+
+actor User
+participant UI as "User Interface"
+participant ValidationUtil as "Validation Utility"
+participant DBUtil as "Database Utility"
+participant AuthUtil as "Auth Utility"
+participant StorageUtil as "Storage Utility"
+participant AIUtil as "AI Utility"
+participant Supabase
+participant OpenAI
+
+' Create Listing Flow
+User -> UI: Fill listing form
+User -> UI: Upload image (optional)
+User -> UI: Submit form
+
+UI -> ValidationUtil: Validate all form fields
+ValidationUtil --> UI: Return validation results
+
+alt validation passes
+    UI -> AuthUtil: getCurrentUser()
+    AuthUtil --> UI: Return user data
+    
+    alt image uploaded
+        UI -> StorageUtil: uploadImage(file)
+        StorageUtil -> Supabase: Upload to storage
+        Supabase --> StorageUtil: Return image URL
+        StorageUtil --> UI: Return image URL
+    end
+    
+    UI -> DBUtil: createListing(data)
+    DBUtil -> Supabase: Insert into listings table
+    Supabase --> DBUtil: Return listing data
+    
+    ' Generate embedding for search
+    UI -> AIUtil: generateEmbedding(listingText)
+    AIUtil -> OpenAI: Create embedding
+    OpenAI --> AIUtil: Return embedding vector
+    AIUtil -> Supabase: Store embedding
+    Supabase --> AIUtil: Confirm storage
+    
+    DBUtil --> UI: Return success with listing ID
+    UI -> User: Show success and redirect
+else validation fails
+    UI -> User: Display validation errors
+end
+
+' Edit Listing Flow
+User -> UI: Navigate to listing
+UI -> DBUtil: getListingById(id)
+DBUtil -> Supabase: Query listing
+Supabase --> DBUtil: Return listing data
+DBUtil --> UI: Return listing
+UI -> User: Display listing with edit controls
+
+User -> UI: Edit listing fields
+User -> UI: Submit changes
+
+UI -> ValidationUtil: Validate changed fields
+ValidationUtil --> UI: Return validation results
+
+alt validation passes
+    UI -> AuthUtil: getCurrentUser()
+    AuthUtil --> UI: Return user data
+    
+    UI -> DBUtil: checkListingOwnership(userId, listingId)
+    DBUtil -> Supabase: Verify ownership
+    Supabase --> DBUtil: Return ownership status
+    
+    alt user is owner
+        UI -> DBUtil: updateListing(listingId, data)
+        DBUtil -> Supabase: Update listing data
+        Supabase --> DBUtil: Confirm update
+        
+        ' Update embedding if content changed
+        alt content changed
+            UI -> AIUtil: updateEmbedding(listingId, newText)
+            AIUtil -> OpenAI: Create new embedding
+            OpenAI --> AIUtil: Return embedding vector
+            AIUtil -> Supabase: Update embedding
+            Supabase --> AIUtil: Confirm update
+        end
+        
+        DBUtil --> UI: Return success
+        UI -> User: Show success message
+    else not owner
+        DBUtil --> UI: Return unauthorized error
+        UI -> User: Show error message
+    end
+else validation fails
+    UI -> User: Display validation errors
+end
+
+' Delete Listing Flow
+User -> UI: Click delete button
+UI -> UI: Show confirmation dialog
+User -> UI: Confirm deletion
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user data
+
+UI -> DBUtil: checkListingOwnership(userId, listingId)
+DBUtil -> Supabase: Verify ownership
+Supabase --> DBUtil: Return ownership status
+
+alt user is owner
+    UI -> DBUtil: deleteListing(listingId)
+    DBUtil -> Supabase: Delete listing and related data
+    Supabase --> DBUtil: Confirm deletion
+    DBUtil --> UI: Return success
+    UI -> User: Show success and redirect
+else not owner
+    DBUtil --> UI: Return unauthorized error
+    UI -> User: Show error message
+end
+
+@enduml

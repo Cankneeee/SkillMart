@@ -1,0 +1,88 @@
+@startuml
+!define SEQUENCE
+title Authentication Sequence Diagram
+autonumber
+
+actor User
+participant LoginForm
+participant authUtils as "Auth Utils"
+participant Supabase
+participant Router
+
+' Login Flow
+User -> LoginForm: Enter email and password
+LoginForm -> LoginForm: Validate input
+LoginForm -> authUtils: signInWithEmail(email, password)
+authUtils -> Supabase: auth.signInWithPassword()
+Supabase --> authUtils: Return auth data/error
+authUtils --> LoginForm: Return result
+
+alt successful login
+    LoginForm -> Router: router.push('/browse')
+else failed login
+    LoginForm -> LoginForm: setError('Incorrect password')
+    LoginForm -> User: Display error message
+end
+
+' Password Recovery Flow
+User -> LoginForm: Click "Forgot Password"
+LoginForm -> Router: Navigate to forget-password
+User -> ForgetPasswordForm: Enter email
+ForgetPasswordForm -> authUtils: isEmailRegistered(email)
+authUtils -> Supabase: Check profiles/auth tables
+Supabase --> authUtils: Return existence status
+
+alt email not registered
+    authUtils --> ForgetPasswordForm: Return false
+    ForgetPasswordForm -> User: Show "Email not registered" error
+else email exists
+    ForgetPasswordForm -> authUtils: resetPassword(email, redirectUrl)
+    authUtils -> Supabase: auth.resetPasswordForEmail()
+    Supabase --> authUtils: Return result
+    authUtils --> ForgetPasswordForm: Return result
+    ForgetPasswordForm -> User: Show confirmation modal
+end
+
+' Password Reset Flow
+User -> PasswordResetForm: Enter new password and confirm
+PasswordResetForm -> PasswordResetForm: validatePassword(password)
+
+alt passwords don't match
+    PasswordResetForm -> User: Show "Passwords do not match" error
+else password too weak
+    PasswordResetForm -> User: Show password strength error
+else password valid
+    PasswordResetForm -> authUtils: updatePassword(newPassword)
+    authUtils -> Supabase: auth.updateUser({ password })
+    Supabase --> authUtils: Return result
+    authUtils --> PasswordResetForm: Return result
+    PasswordResetForm -> User: Show success modal
+    PasswordResetForm -> Router: Redirect to login
+end
+
+' Sign Up Flow
+User -> SignUpForm: Fill signup form
+SignUpForm -> SignUpForm: validateForm()
+
+alt validation fails
+    SignUpForm -> User: Show validation errors
+else form valid
+    SignUpForm -> authUtils: isEmailRegistered(email)
+    authUtils -> Supabase: Check if email exists
+    Supabase --> authUtils: Return result
+    
+    alt email already registered
+        authUtils --> SignUpForm: Return true
+        SignUpForm -> User: Show "Email already registered" error
+    else email available
+        SignUpForm -> authUtils: signUpWithEmail(email, password)
+        authUtils -> Supabase: auth.signUp()
+        Supabase --> authUtils: Return user data
+        authUtils --> SignUpForm: Return data
+        
+        SignUpForm -> Supabase: updateUserProfile(userId, profileData)
+        Supabase --> SignUpForm: Return updated profile
+        SignUpForm -> Router: router.push('/browse')
+    end
+end
+@enduml

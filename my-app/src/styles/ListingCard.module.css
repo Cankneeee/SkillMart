@@ -1,0 +1,138 @@
+.cardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: var(--spacing-xl);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--navbar-bg);
+  background-color: var(--body-bg) !important;
+  height: 100%;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.imageContainer {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+
+.cardImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.typeBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: var(--hover-button);
+  color: var(--button-text);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+.cardBody {
+  padding: var(--spacing-md);
+}
+
+.categoryTag {
+  display: inline-block;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.8rem;
+  color: var(--hover-button);
+  background-color: rgba(126, 87, 194, 0.1);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-roboto), sans-serif;
+}
+
+.cardTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+  font-family: var(--font-montserrat), sans-serif;
+  color: var(--header-text);
+  /* Limit to 2 lines with ellipsis */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 2.8rem;
+}
+
+.authorContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.authorImageWrapper {
+  width: 30px;
+  height: 30px;
+  margin-right: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;  /* Make the wrapper circular */
+  overflow: hidden;    /* Ensure image doesn't overflow the circular container */
+}
+
+.authorImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;  /* Make the image circular */
+}
+
+.defaultAuthorIcon {
+  font-size: 20px;
+  color: var(--header-text);
+}
+
+.authorName {
+  font-size: 0.9rem;
+  color: var(--button-bg);
+  font-family: var(--font-roboto), sans-serif;
+}
+
+.ratingContainer {
+  display: flex;
+  align-items: center;
+}
+
+.stars {
+  display: flex;
+  margin-right: var(--spacing-xs);
+}
+
+.star {
+  color: gold;
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+.rating {
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.9rem;
+  color: var(--header-text);
+  margin-right: 4px;
+}
+
+.reviewCount {
+  font-size: 0.85rem;
+  color: #666;
+}

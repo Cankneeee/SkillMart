@@ -1,0 +1,85 @@
+@startuml
+
+title Saved Listings Sequence Diagram (Design Phase)
+autonumber
+
+actor User
+participant UI as "User Interface"
+participant AuthUtil as "Auth Utility"
+participant DBUtil as "Database Utility"
+participant Supabase
+
+' Save Listing Flow
+User -> UI: View listing details
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user status
+
+alt user authenticated
+    UI -> DBUtil: checkIfSaved(userId, listingId)
+    DBUtil -> Supabase: Query saved status
+    Supabase --> DBUtil: Return saved status
+    DBUtil --> UI: Return boolean result
+    UI -> User: Display appropriate bookmark icon
+    
+    User -> UI: Click bookmark icon
+    
+    alt listing not saved
+        UI -> DBUtil: saveListing(userId, listingId)
+        DBUtil -> Supabase: Insert saved record
+        Supabase --> DBUtil: Confirm save
+        DBUtil --> UI: Return success
+        UI -> UI: Update bookmark icon to filled
+    else listing already saved
+        UI -> DBUtil: unsaveListing(userId, listingId)
+        DBUtil -> Supabase: Delete saved record
+        Supabase --> DBUtil: Confirm deletion
+        DBUtil --> UI: Return success
+        UI -> UI: Update bookmark icon to empty
+    end
+else user not authenticated
+    UI -> User: Show login prompt or redirect
+end
+
+' View Saved Listings Flow
+User -> UI: Navigate to saved listings page
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user status
+
+alt user authenticated
+    UI -> DBUtil: getSavedListings(userId)
+    DBUtil -> Supabase: Query saved listings with details
+    Supabase --> DBUtil: Return saved listings
+    
+    loop for each listing
+        UI -> DBUtil: getListingMetadata(listingId)
+        DBUtil -> Supabase: Query ratings and author info
+        Supabase --> DBUtil: Return metadata
+        DBUtil --> UI: Return enhanced listing data
+    end
+    
+    DBUtil --> UI: Return complete listings data
+    UI -> UI: Organize listings by category
+    UI -> User: Display saved listings by category
+    
+    ' Filter Saved Listings
+    User -> UI: Select listing type filter
+    UI -> DBUtil: getSavedListingsByType(userId, type)
+    DBUtil -> Supabase: Query filtered saved listings
+    Supabase --> DBUtil: Return filtered listings
+    DBUtil --> UI: Return filtered data
+    UI -> UI: Re-organize by category
+    UI -> User: Update listings display
+    
+    ' View Category Saved Listings
+    User -> UI: Click category
+    UI -> DBUtil: getSavedListingsByCategory(userId, category)
+    DBUtil -> Supabase: Query category saved listings
+    Supabase --> DBUtil: Return category listings
+    DBUtil --> UI: Return category data
+    UI -> User: Show category listings
+else user not authenticated
+    UI -> User: Redirect to login page
+end
+
+@enduml

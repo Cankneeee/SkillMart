@@ -1,0 +1,55 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    padding-top: 5rem;
+    background-color: var(--body-bg);
+  }
+  
+  .content {
+    text-align: center;
+    padding: 2rem;
+    color: var(--header-text);
+  }
+  
+  .spinner {
+    position: relative;
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto;
+  }
+  
+  .spinnerCircle {
+    width: 4rem;
+    height: 4rem;
+    border: 0.25rem solid var(--navbar-bg);
+    border-top-color: var(--button-bg);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .title {
+    margin-top: 1.5rem;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--header-text);
+  }
+  
+  .subtitle {
+    margin-top: 0.5rem;
+    font-size: var(--font-size-base);
+    color: var(--header-text);
+    opacity: 0.75;
+  }
+  
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }

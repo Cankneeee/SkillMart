@@ -1,0 +1,107 @@
+/* Common CSS variables for all form components 
+   (SignUpForm, LoginForm, ForgetPasswordForm, PasswordResetForm) */
+
+/* Form Container */
+.container {
+    width: 100%;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--body-bg);
+  }
+  
+  /* Heading */
+  .heading {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--header-text);
+    margin-bottom: var(--spacing-xl);
+  }
+  
+  /* Form Styling */
+  .form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 350px;
+  }
+  
+  /* Input Fields */
+  .input {
+    width: 100%;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  /* Active state for input fields */
+  .input:focus {
+    border-color: var(--hover-button);
+    outline: none;
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* Error State for Input Fields - Only border changes, no background color */
+  .inputError {
+    border-color: var(--error-button) !important;
+    border-width: 2px !important;
+  }
+  
+  /* Submit Button */
+  .button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    padding: var(--spacing-sm);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+  }
+  
+  .button:hover {
+    background-color: var(--hover-button);
+  }
+  
+  .button:disabled {
+    background-color: var(--input-border);
+    cursor: not-allowed;
+  }
+  
+  /* Link Styles */
+  .link {
+    margin-top: var(--spacing-md);
+    font-size: 0.9rem;
+    color: var(--header-text);
+  }
+  
+  .link a {
+    color: var(--button-bg);
+    text-decoration: none;
+  }
+  
+  .link a:hover {
+    color: var(--hover-button);
+    text-decoration: underline;
+  }
+  
+  /* Error Message */
+  .errorMessage {
+    color: var(--error-header-text);
+    font-size: 0.9rem;
+    margin-top: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  /* User Email Display (for PasswordResetForm) */
+  .userEmailDisplay {
+    margin-bottom: var(--spacing-md);
+    color: var(--header-text);
+    font-size: var(--font-size-base);
+  }

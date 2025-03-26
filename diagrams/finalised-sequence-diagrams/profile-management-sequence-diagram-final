@@ -1,0 +1,169 @@
+@startuml
+!define SEQUENCE
+title Profile Management Sequence Diagram
+autonumber
+
+actor User
+participant ProfileComp as "Profile Component"
+participant UserContext as "User Context"
+participant AuthUtils as "Auth Utils"
+participant ImageUtils as "Image Utils"
+participant DBUtils as "Database Utils"
+participant Supabase
+
+' Load Profile Data
+User -> ProfileComp: Navigate to profile page
+ProfileComp -> ProfileComp: useEffect hook runs
+ProfileComp -> ProfileComp: fetchUserProfile()
+
+ProfileComp -> AuthUtils: getUser()
+AuthUtils -> Supabase: auth.getUser()
+Supabase --> AuthUtils: Return user data
+AuthUtils --> ProfileComp: Return user or null
+
+alt user found
+    ProfileComp -> DBUtils: getUserProfile(user.id)
+    DBUtils -> Supabase: from('profiles').select()
+    Supabase --> DBUtils: Return profile data
+    DBUtils --> ProfileComp: Return profile
+    
+    alt profile found
+        ProfileComp -> UserContext: setUsername(profile.username)
+        ProfileComp -> ProfileComp: setEmail(profile.email)
+        ProfileComp -> UserContext: setProfilePicture(profile.profile_picture)
+    else profile not found
+        ProfileComp -> ProfileComp: setErrorMessage("Error loading profile")
+    end
+else no user
+    ProfileComp -> ProfileComp: setErrorMessage("Failed to fetch user data")
+end
+
+ProfileComp -> User: Display profile information
+
+' Profile Picture Upload
+User -> ProfileComp: Click edit profile picture
+ProfileComp -> ProfileComp: fileInputRef.current.click()
+User -> ProfileComp: Select image file
+
+ProfileComp -> ProfileComp: handleProfilePictureUpload(event)
+
+alt userId exists
+    ProfileComp -> ProfileComp: Validate file type
+    ProfileComp -> ProfileComp: Validate file size
+    
+    alt validation passes
+        ProfileComp -> ImageUtils: uploadProfilePicture(userId, file)
+        ImageUtils -> Supabase: storage.upload(path, file)
+        Supabase --> ImageUtils: Return data
+        
+        ImageUtils -> DBUtils: updateProfileField(userId, "profile_picture", imageUrl)
+        DBUtils -> Supabase: from('profiles').update()
+        Supabase --> DBUtils: Confirm update
+        
+        DBUtils --> ImageUtils: Return result
+        ImageUtils --> ProfileComp: Return imageUrl
+        
+        ProfileComp -> UserContext: setProfilePicture(imageUrl)
+        ProfileComp -> ProfileComp: setSuccessMessage()
+    else validation fails
+        ProfileComp -> ProfileComp: setErrorMessage()
+    end
+else no userId
+    ProfileComp -> ProfileComp: setErrorMessage("User not authenticated")
+end
+
+' Username Edit
+User -> ProfileComp: Click edit username
+ProfileComp -> ProfileComp: setIsEditingUsername(true)
+ProfileComp -> User: Show username edit field
+
+User -> ProfileComp: Enter new username
+User -> ProfileComp: Save changes
+
+ProfileComp -> ProfileComp: handleUsernameSave()
+
+alt userId exists and username not empty
+    ProfileComp -> DBUtils: updateProfileField(userId, "username", value)
+    DBUtils -> Supabase: from('profiles').update()
+    Supabase --> DBUtils: Return result
+    
+    alt update successful
+        DBUtils --> ProfileComp: Return success
+        ProfileComp -> UserContext: setUsername(editedUsername)
+        ProfileComp -> ProfileComp: setIsEditingUsername(false)
+        ProfileComp -> ProfileComp: setSuccessMessage()
+    else update failed
+        DBUtils --> ProfileComp: Return error
+        ProfileComp -> ProfileComp: setErrorMessage()
+    end
+end
+
+' Email Edit
+User -> ProfileComp: Click edit email
+ProfileComp -> ProfileComp: setIsEditingEmail(true)
+ProfileComp -> User: Show email edit field
+
+User -> ProfileComp: Enter new email
+User -> ProfileComp: Save changes
+
+ProfileComp -> ProfileComp: handleEmailSave()
+
+alt userId exists and email not empty
+    ProfileComp -> ProfileComp: Validate email format
+    
+    alt email valid
+        ProfileComp -> DBUtils: updateProfileField(userId, "email", value)
+        DBUtils -> Supabase: from('profiles').update()
+        Supabase --> DBUtils: Return result
+        
+        alt update successful
+            DBUtils --> ProfileComp: Return success
+            ProfileComp -> ProfileComp: setEmail(editedEmail)
+            ProfileComp -> ProfileComp: setIsEditingEmail(false)
+            ProfileComp -> ProfileComp: setSuccessMessage()
+        else update failed
+            DBUtils --> ProfileComp: Return error
+            ProfileComp -> ProfileComp: setErrorMessage()
+        end
+    else email invalid
+        ProfileComp -> ProfileComp: setErrorMessage("Invalid email")
+    end
+end
+
+' Password Edit
+User -> ProfileComp: Click edit password
+ProfileComp -> ProfileComp: setIsEditingPassword(true)
+ProfileComp -> User: Show password edit fields
+
+User -> ProfileComp: Enter new password
+User -> ProfileComp: Enter confirm password
+User -> ProfileComp: Save changes
+
+ProfileComp -> ProfileComp: handlePasswordSave()
+
+alt userId exists
+    ProfileComp -> ProfileComp: Reset error state
+    ProfileComp -> AuthUtils: validatePassword(newPassword)
+    
+    alt password validation fails
+        AuthUtils --> ProfileComp: Return validation error
+        ProfileComp -> ProfileComp: setPasswordError(error)
+    else passwords don't match
+        ProfileComp -> ProfileComp: setPasswordError("Passwords don't match")
+    else validation passes
+        ProfileComp -> AuthUtils: updatePassword(newPassword)
+        AuthUtils -> Supabase: auth.updateUser({ password })
+        Supabase --> AuthUtils: Return result
+        
+        alt update successful
+            AuthUtils --> ProfileComp: Return success
+            ProfileComp -> ProfileComp: Reset password fields
+            ProfileComp -> ProfileComp: setIsEditingPassword(false)
+            ProfileComp -> ProfileComp: setSuccessMessage()
+        else update failed
+            AuthUtils --> ProfileComp: Return error
+            ProfileComp -> ProfileComp: setPasswordError(error)
+        end
+    end
+end
+@enduml

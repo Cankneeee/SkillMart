@@ -1,0 +1,225 @@
+.profileContainer {
+  width: 100%;
+  padding: var(--spacing-lg) 0;
+  background-color: var(--body-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profileContent {
+  width: 100%;
+  max-width: 550px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profileHeader {
+  position: relative;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 120px;
+}
+
+.profileImage {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.defaultProfileIcon {
+  font-size: 120px;
+  color: var(--header-text);
+}
+
+/* Profile Pic Edit Button - Removed highlight/focus styles */
+.editProfileButton {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border-radius: var(--radius-full);
+  padding: 6px;
+  font-size: var(--font-size-base);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.editProfileButton:hover {
+  background-color: var(--hover-button);
+}
+
+/* Remove focus highlight */
+.editProfileButton:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Remove active state highlight */
+.editProfileButton:active {
+  background-color: var(--button-bg);
+}
+
+/* Row styling with full width and vertical alignment */
+.profileRow {
+  margin-bottom: var(--spacing-md);
+  width: 100%;
+  background-color: var(--body-bg);
+  display: grid;
+  grid-template-columns: 120px minmax(200px, 1fr) 60px;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Left-align field labels with compact width */
+.profileLabel {
+  font-family: var(--font-montserrat);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--header-text);
+  text-align: left;
+  padding-right: 10px;
+}
+
+/* Value field with constrained width */
+.profileValue {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 5px;
+}
+
+/* Input fields */
+.inputField {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.inputField:focus,
+.inputField:hover {
+  border-color: var(--hover-button);
+  box-shadow: var(--shadow-md);
+}
+
+/* Error styling for password validation */
+.inputFieldError {
+  border-color: var(--error-button) !important;
+  border-width: 2px !important;
+}
+
+/* Button column alignment with tighter spacing */
+.buttonColumn {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-left: 5px;
+}
+
+/* Compact Edit Button */
+.editButton {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  padding: 0;
+}
+
+/* Smaller gap between the save & discard buttons */
+.editButton + .editButton {
+  margin-left: 4px;
+}
+
+.editButton:hover {
+  background-color: var(--hover-button);
+}
+
+/* Error Message */
+.errorText {
+  color: var(--error-header-text);
+  font-size: 0.9rem;
+  margin-top: var(--spacing-xs);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .profileRow {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .profileContainer {
+    padding: var(--spacing-md);
+  }
+  
+  /* Create more compact layout on small screens */
+  .profileRow {
+    margin-bottom: 10px;
+  }
+  
+  /* Ensure inputs don't overflow */
+  .inputField {
+    padding: 6px;
+    font-size: 14px;
+  }
+  
+  /* Adjust buttons to stay aligned */
+  .editButton {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+}
+
+/* Responsive handling for all screen sizes */
+@media (max-width: 768px) {
+  .profileRow {
+    grid-template-columns: 100px minmax(150px, 1fr) 50px;
+  }
+  
+  .profileContent {
+    max-width: 500px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profileRow {
+    grid-template-columns: 85px minmax(100px, 1fr) 40px;
+    gap: 4px;
+  }
+  
+  .profileLabel {
+    font-size: 14px;
+  }
+  
+  .editButton {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+  }
+  
+  .profileContent {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+}

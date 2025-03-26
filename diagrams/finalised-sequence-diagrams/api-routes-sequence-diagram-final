@@ -1,0 +1,164 @@
+@startuml
+!define SEQUENCE
+title API Routes Sequence Diagram
+autonumber
+
+participant Client
+participant EmbeddingAPI as "/api/generate-embedding"
+participant ChatAPI as "/api/chat"
+participant SummaryAPI as "/api/review-summary"
+participant OpenAIService as "OpenAI Service"
+participant ServerSupabase as "Supabase (Server)"
+
+' Embedding Generation API
+Client -> EmbeddingAPI: POST { type, id, text }
+
+EmbeddingAPI -> ServerSupabase: Create server client
+EmbeddingAPI -> OpenAIService: getOpenAIInstance()
+OpenAIService --> EmbeddingAPI: Return OpenAI client
+
+EmbeddingAPI -> OpenAIService: openai.embeddings.create()
+OpenAIService --> EmbeddingAPI: Return embedding vector
+
+alt type === 'review'
+    EmbeddingAPI -> ServerSupabase: Check if embedding exists
+    ServerSupabase --> EmbeddingAPI: Return existing data
+    
+    alt embedding exists
+        EmbeddingAPI -> ServerSupabase: Update existing embedding
+    else new embedding
+        EmbeddingAPI -> ServerSupabase: Insert embedding
+    end
+    
+    ' Mark listing summary for update
+    EmbeddingAPI -> ServerSupabase: Get review's listing_id
+    ServerSupabase --> EmbeddingAPI: Return listing_id
+    
+    EmbeddingAPI -> ServerSupabase: Update listing_summaries.needs_update
+
+else type === 'listing'
+    EmbeddingAPI -> ServerSupabase: Check if embedding exists
+    ServerSupabase --> EmbeddingAPI: Return existing data
+    
+    alt embedding exists
+        EmbeddingAPI -> ServerSupabase: Update existing embedding
+    else new embedding
+        EmbeddingAPI -> ServerSupabase: Insert embedding
+    end
+end
+
+EmbeddingAPI --> Client: Return success response
+
+' Chat API
+Client -> ChatAPI: POST { message, sessionId, sessionHistory }
+
+ChatAPI -> ServerSupabase: Create server client
+ChatAPI -> OpenAIService: getOpenAIInstance()
+OpenAIService --> ChatAPI: Return OpenAI client
+
+' Handle session management
+alt sessionId starts with 'session-'
+    ChatAPI -> ServerSupabase: auth.getUser()
+    
+    alt user authenticated
+        ServerSupabase --> ChatAPI: Return user data
+        ChatAPI -> ServerSupabase: Insert new chat session
+        ServerSupabase --> ChatAPI: Return new sessionId
+    else not authenticated
+        ChatAPI -> ChatAPI: Use temporary session
+    end
+end
+
+' Store user message
+ChatAPI -> ServerSupabase: Insert chat message (user)
+
+' Generate embedding for query
+ChatAPI -> OpenAIService: embeddings.create()
+OpenAIService --> ChatAPI: Return query embedding
+
+' Find relevant context
+ChatAPI -> ServerSupabase: rpc('match_listings')
+ServerSupabase --> ChatAPI: Return relevant listings
+
+alt relevant listings found
+    ChatAPI -> ServerSupabase: Get full listing details
+    ServerSupabase --> ChatAPI: Return listings data
+end
+
+' Extract listing IDs from messages and get similar listings
+ChatAPI -> ChatAPI: Extract IDs from message/history
+
+alt IDs found
+    ChatAPI -> ServerSupabase: rpc('similar_listings')
+    ServerSupabase --> ChatAPI: Return similar listings
+    
+    ChatAPI -> ServerSupabase: Get full listing details
+    ServerSupabase --> ChatAPI: Return similar listings data
+end
+
+' Extract categories and get examples
+ChatAPI -> ChatAPI: Extract category mentions
+
+alt categories found
+    loop for each category
+        ChatAPI -> ServerSupabase: Find category listings
+        ServerSupabase --> ChatAPI: Return listings for category
+    end
+end
+
+' Compile context for AI
+ChatAPI -> ChatAPI: Assemble context information
+
+' Generate AI response
+ChatAPI -> OpenAIService: chat.completions.create()
+OpenAIService --> ChatAPI: Return AI message
+
+' Store bot response
+ChatAPI -> ServerSupabase: Insert chat message (bot)
+
+ChatAPI --> Client: Return { response, sessionId }
+
+' Review Summary API
+Client -> SummaryAPI: POST { listingId }
+
+SummaryAPI -> ServerSupabase: Create server client
+SummaryAPI -> OpenAIService: getOpenAIInstance()
+OpenAIService --> SummaryAPI: Return OpenAI client
+
+' Check for existing summary
+SummaryAPI -> ServerSupabase: Get existing summary
+ServerSupabase --> SummaryAPI: Return summary data
+
+alt summary exists and doesn't need update
+    SummaryAPI --> Client: Return existing summary
+else new or outdated summary
+    ' Fetch reviews
+    SummaryAPI -> ServerSupabase: Get listing reviews
+    ServerSupabase --> SummaryAPI: Return reviews
+    
+    alt no reviews
+        SummaryAPI --> Client: Return empty summary
+    else has reviews
+        ' Generate query embedding
+        SummaryAPI -> OpenAIService: embeddings.create()
+        OpenAIService --> SummaryAPI: Return query embedding
+        
+        ' Find most relevant reviews
+        SummaryAPI -> ServerSupabase: rpc('match_reviews')
+        ServerSupabase --> SummaryAPI: Return review IDs
+        
+        ' Get full reviews content
+        SummaryAPI -> SummaryAPI: Extract review texts and ratings
+        
+        ' Generate summary
+        SummaryAPI -> OpenAIService: chat.completions.create()
+        OpenAIService --> SummaryAPI: Return summary JSON
+        
+        ' Parse and store summary
+        SummaryAPI -> SummaryAPI: Parse JSON response
+        SummaryAPI -> ServerSupabase: Store in listing_summaries
+        
+        SummaryAPI --> Client: Return summary, pros, cons
+    end
+end
+@enduml

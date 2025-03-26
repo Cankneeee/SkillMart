@@ -1,0 +1,83 @@
+@startuml
+
+title Browse and Search Sequence Diagram (Design Phase)
+autonumber
+
+actor User
+participant UI as "User Interface"
+participant DBUtil as "Database Utility" 
+participant AIUtil as "AI Utility"
+participant Supabase
+participant OpenAI
+
+' Browse Listings Flow
+User -> UI: Navigate to browse page
+UI -> DBUtil: getListingsByCategory()
+DBUtil -> Supabase: Query listings grouped by category
+Supabase --> DBUtil: Return listings data
+
+loop for each listing
+    UI -> DBUtil: getListingMetadata(listingId)
+    DBUtil -> Supabase: Query ratings and author info
+    Supabase --> DBUtil: Return metadata
+    DBUtil --> UI: Return enhanced listing data
+end
+
+DBUtil --> UI: Return organized listings
+UI -> User: Display listings by category
+
+' Filter Listings Flow
+User -> UI: Select listing type filter
+UI -> DBUtil: getListingsByType(type)
+DBUtil -> Supabase: Query listings by type
+Supabase --> DBUtil: Return filtered listings
+DBUtil --> UI: Return filtered data
+UI -> User: Update listings display
+
+' Category Browse Flow
+User -> UI: Click on category
+UI -> DBUtil: getListingsByCategory(category)
+DBUtil -> Supabase: Query listings in category
+Supabase --> DBUtil: Return category listings
+
+loop for each listing
+    UI -> DBUtil: getListingMetadata(listingId)
+    DBUtil -> Supabase: Query ratings and author info
+    Supabase --> DBUtil: Return metadata
+    DBUtil --> UI: Return enhanced listing data
+end
+
+DBUtil --> UI: Return listings for category
+UI -> User: Display category listings
+
+' Search Flow
+User -> UI: Enter search query
+User -> UI: Submit search
+
+UI -> AIUtil: createSearchEmbedding(query)
+AIUtil -> OpenAI: Generate embedding vector
+OpenAI --> AIUtil: Return query embedding
+
+UI -> DBUtil: searchListings(query, embedding)
+
+' Replace parallel with sequential flow
+note over DBUtil: Performing parallel searches
+DBUtil -> Supabase: Perform text search
+Supabase --> DBUtil: Return text matches
+DBUtil -> Supabase: Perform vector similarity search
+Supabase --> DBUtil: Return semantic matches
+note over DBUtil: Combining search results
+
+DBUtil -> DBUtil: Combine and rank results
+
+loop for each result
+    UI -> DBUtil: getListingMetadata(listingId)
+    DBUtil -> Supabase: Query ratings and author info
+    Supabase --> DBUtil: Return metadata
+    DBUtil --> UI: Return enhanced listing data
+end
+
+DBUtil --> UI: Return search results
+UI -> User: Display search results
+
+@enduml

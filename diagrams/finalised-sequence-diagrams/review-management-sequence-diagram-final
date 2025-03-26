@@ -1,0 +1,187 @@
+@startuml
+!define SEQUENCE
+title Review Management Sequence Diagram
+autonumber
+
+actor User
+participant ListingView as "Listing View"
+participant ReviewComp as "ReviewsSection"
+participant ReviewAPI as "Review API"
+participant DBUtils as "Database Utils"
+participant Supabase
+participant OpenAI
+participant ServerAPI as "Server API"
+
+' View Reviews Flow
+User -> ListingView: View listing details
+ListingView -> ReviewComp: Initialize reviews section
+ReviewComp -> ReviewComp: useEffect hook runs
+ReviewComp -> ReviewComp: fetchReviews()
+
+ReviewComp -> ReviewAPI: getListingReviews(listingId)
+ReviewAPI -> DBUtils: getListingReviews(listingId)
+
+alt reviews table exists
+    DBUtils -> Supabase: from('reviews').select() with profiles
+    alt join works
+        Supabase --> DBUtils: Return reviews with profiles
+    else join fails
+        DBUtils -> Supabase: from('reviews').select() without join
+        Supabase --> DBUtils: Return basic reviews
+    end
+else error with table
+    DBUtils --> ReviewAPI: Return empty array
+end
+
+DBUtils --> ReviewAPI: Return reviews
+ReviewAPI --> ReviewComp: Return reviews
+
+' Get average rating
+ReviewComp -> ReviewAPI: getListingRating(listingId)
+ReviewAPI -> DBUtils: getListingRating(listingId)
+DBUtils -> Supabase: from('reviews').select('rating')
+Supabase --> DBUtils: Return ratings
+DBUtils --> ReviewAPI: Return average & count
+ReviewAPI --> ReviewComp: Display rating summary
+
+' AI Summary (if reviews exist)
+alt reviews exist
+    ReviewComp -> ReviewComp: fetchAISummary()
+    ReviewComp -> ServerAPI: POST /api/review-summary { listingId }
+    ServerAPI -> Supabase: Check for existing summary
+    
+    alt up-to-date summary exists
+        Supabase --> ServerAPI: Return existing summary
+    else new summary needed
+        ServerAPI -> Supabase: Fetch reviews
+        Supabase --> ServerAPI: Return reviews
+        
+        ServerAPI -> OpenAI: Generate embedding for query
+        OpenAI --> ServerAPI: Return embedding
+        
+        ServerAPI -> Supabase: Find most relevant reviews (rpc)
+        Supabase --> ServerAPI: Return relevant reviews
+        
+        ServerAPI -> OpenAI: Generate summary with GPT-4
+        OpenAI --> ServerAPI: Return summary JSON
+        
+        ServerAPI -> Supabase: Store in listing_summaries
+    end
+    
+    ServerAPI --> ReviewComp: Return summary data
+    ReviewComp -> ReviewComp: setAiSummary(data)
+    ReviewComp -> User: Display AI summary
+end
+
+' Check if user has already reviewed
+alt userId exists
+    ReviewComp -> ReviewComp: Check if user has reviewed
+    alt has not reviewed
+        ReviewComp -> User: Show "Leave a Review" button
+    end
+end
+
+' Create Review Flow
+User -> ReviewComp: Click "Leave a Review"
+
+alt userId exists
+    ReviewComp -> User: Show review form
+    User -> ReviewComp: Enter rating and comment
+    User -> ReviewComp: Submit review
+    
+    ReviewComp -> ReviewAPI: createReview(data)
+    ReviewAPI -> DBUtils: createReview(data)
+    DBUtils -> Supabase: Check for existing review
+    
+    alt user already reviewed
+        DBUtils --> ReviewAPI: Return error
+        ReviewAPI --> ReviewComp: Show error message
+    else listing is user's own
+        DBUtils --> ReviewAPI: Return error
+        ReviewAPI --> ReviewComp: Show error message
+    else can review
+        DBUtils -> Supabase: from('reviews').insert()
+        Supabase --> DBUtils: Return created review
+        
+        ' Get user profile
+        DBUtils -> Supabase: from('profiles').select()
+        Supabase --> DBUtils: Return profile
+        
+        DBUtils --> ReviewAPI: Return review
+        ReviewAPI --> ReviewComp: Add review to display
+        
+        ' Update average rating
+        ReviewComp -> ReviewAPI: getListingRating(listingId)
+        ReviewAPI -> DBUtils: getListingRating(listingId)
+        DBUtils -> Supabase: from('reviews').select('rating')
+        Supabase --> DBUtils: Return updated ratings
+        DBUtils --> ReviewAPI: Return new average & count
+        ReviewAPI --> ReviewComp: Update rating display
+        
+        ' Trigger AI summary refresh
+        ReviewComp -> ReviewComp: setAiSummary({ summary: "" })
+    end
+else no userId
+    ReviewComp -> window.location: Redirect to login
+end
+
+' Edit Review Flow
+User -> ReviewComp: Click edit on review
+ReviewComp -> ReviewComp: handleEditToggle(id, true)
+ReviewComp -> User: Show edit interface
+
+User -> ReviewComp: Update review
+User -> ReviewComp: Submit changes
+
+ReviewComp -> ReviewAPI: updateReview(id, userId, data)
+ReviewAPI -> DBUtils: updateReview(id, userId, data)
+DBUtils -> Supabase: Check if review belongs to user
+
+alt user owns review
+    DBUtils -> Supabase: from('reviews').update()
+    Supabase --> DBUtils: Return updated review
+    DBUtils --> ReviewAPI: Return updated review
+    ReviewAPI --> ReviewComp: Update review display
+    
+    ' Trigger AI summary refresh
+    ReviewComp -> ReviewComp: setAiSummary({ summary: "" })
+else unauthorized
+    DBUtils --> ReviewAPI: Return null
+    ReviewAPI --> ReviewComp: Show error
+end
+
+' Delete Review Flow
+User -> ReviewComp: Click delete on review
+ReviewComp -> ReviewComp: handleDeleteReview()
+ReviewComp -> User: Show confirmation modal
+
+User -> ReviewComp: Confirm deletion
+
+ReviewComp -> ReviewAPI: deleteReview(id, userId)
+ReviewAPI -> DBUtils: deleteReview(id, userId)
+DBUtils -> Supabase: Check if review belongs to user
+
+alt user owns review
+    DBUtils -> Supabase: from('reviews').delete()
+    Supabase --> DBUtils: Confirm deletion
+    DBUtils --> ReviewAPI: Return success
+    ReviewAPI --> ReviewComp: Remove review from display
+    
+    ' Update user has reviewed state
+    ReviewComp -> ReviewComp: setUserHasReviewed(false)
+    
+    ' Update average rating
+    ReviewComp -> ReviewAPI: getListingRating(listingId)
+    ReviewAPI -> DBUtils: getListingRating(listingId)
+    DBUtils -> Supabase: from('reviews').select('rating')
+    Supabase --> DBUtils: Return updated ratings
+    DBUtils --> ReviewAPI: Return new average & count
+    ReviewAPI --> ReviewComp: Update rating display
+    
+    ' Trigger AI summary refresh
+    ReviewComp -> ReviewComp: setAiSummary({ summary: "" })
+else unauthorized
+    DBUtils --> ReviewAPI: Return false
+    ReviewAPI --> ReviewComp: Show error
+end
+@enduml

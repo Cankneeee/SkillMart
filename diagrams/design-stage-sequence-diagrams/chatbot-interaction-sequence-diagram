@@ -1,0 +1,133 @@
+@startuml
+
+title Chatbot Interaction Sequence Diagram (Design Phase)
+autonumber
+
+actor User
+participant UI as "User Interface"
+participant AuthUtil as "Auth Utility"
+participant DBUtil as "Database Utility"
+participant AIUtil as "AI Utility"
+participant Supabase
+participant OpenAI
+
+' Initialize Chatbot
+User -> UI: Click chat button
+UI -> UI: Open chat interface
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user status
+
+alt user authenticated
+    UI -> DBUtil: getUserChatSessions()
+    DBUtil -> Supabase: Query user's chat sessions
+    Supabase --> DBUtil: Return sessions data
+    
+    alt has previous sessions
+        UI -> DBUtil: getSessionMessages(sessionId)
+        DBUtil -> Supabase: Query session messages
+        Supabase --> DBUtil: Return messages
+        DBUtil --> UI: Return conversation history
+        UI -> User: Display chat with history
+    else no previous sessions
+        UI -> UI: Initialize new session
+        UI -> User: Display chat with welcome message
+    end
+else user not authenticated
+    UI -> UI: Create temporary session
+    UI -> User: Display chat with welcome message
+end
+
+' Send Message Flow
+User -> UI: Type and send message
+UI -> UI: Add message to conversation display
+
+UI -> AIUtil: processMessage(message, sessionId, history)
+
+' Generate message embedding
+AIUtil -> OpenAI: Create message embedding
+OpenAI --> AIUtil: Return embedding vector
+
+' Find relevant context
+AIUtil -> DBUtil: findRelevantListings(embedding)
+DBUtil -> Supabase: Perform vector similarity search
+Supabase --> DBUtil: Return relevant listings
+DBUtil --> AIUtil: Return context information
+
+' Generate AI response
+AIUtil -> OpenAI: Generate response with context
+OpenAI --> AIUtil: Return AI response
+
+' Store conversation
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user status
+
+alt user authenticated
+    UI -> DBUtil: saveMessage(sessionId, 'user', message)
+    DBUtil -> Supabase: Store user message
+    Supabase --> DBUtil: Confirm storage
+    
+    UI -> DBUtil: saveMessage(sessionId, 'bot', response)
+    DBUtil -> Supabase: Store bot response
+    Supabase --> DBUtil: Confirm storage
+end
+
+AIUtil --> UI: Return processed response
+UI -> User: Display bot response
+
+' Manage Chat Sessions Flow (authenticated only)
+User -> UI: Click manage sessions
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user status
+
+alt user authenticated
+    UI -> UI: Show session management interface
+    UI -> DBUtil: getUserChatSessions()
+    DBUtil -> Supabase: Query user's chat sessions
+    Supabase --> DBUtil: Return sessions data
+    DBUtil --> UI: Return sessions list
+    UI -> User: Display sessions list
+    
+    alt create new session
+        User -> UI: Enter session name
+        User -> UI: Click create
+        UI -> DBUtil: createChatSession(userId, name)
+        DBUtil -> Supabase: Insert new session
+        Supabase --> DBUtil: Return new session ID
+        DBUtil --> UI: Return new session
+        UI -> UI: Switch to new session
+        UI -> User: Show empty conversation
+    
+    else rename session
+        User -> UI: Select session
+        User -> UI: Enter new name
+        UI -> DBUtil: updateSessionName(sessionId, newName)
+        DBUtil -> Supabase: Update session name
+        Supabase --> DBUtil: Confirm update
+        DBUtil --> UI: Return success
+        UI -> UI: Update session display
+    
+    else delete session
+        User -> UI: Select session
+        User -> UI: Confirm deletion
+        UI -> DBUtil: deleteSession(sessionId)
+        DBUtil -> Supabase: Delete session and messages
+        Supabase --> DBUtil: Confirm deletion
+        DBUtil --> UI: Return success
+        UI -> UI: Remove from sessions list
+    
+    else switch session
+        User -> UI: Click on session
+        UI -> DBUtil: getSessionMessages(sessionId)
+        DBUtil -> Supabase: Query session messages
+        Supabase --> DBUtil: Return messages
+        DBUtil --> UI: Return conversation history
+        UI -> UI: Switch active session
+        UI -> User: Display selected conversation
+    end
+else
+    UI -> User: Show error or redirect to login
+end
+
+@enduml

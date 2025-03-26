@@ -1,0 +1,118 @@
+@startuml
+!define SEQUENCE
+title Saved Listings Sequence Diagram
+autonumber
+
+actor User
+participant ListingView as "Listing View"
+participant SavedView as "Saved Listings View"
+participant API as "Saved Listings API"
+participant DBUtils as "Database Utils"
+participant Supabase
+participant Router
+
+' Save/Unsave Listing Flow
+User -> ListingView: View listing details
+ListingView -> Supabase: auth.getSession()
+Supabase --> ListingView: Return session
+
+alt session exists
+    ListingView -> API: isListingSaved(userId, listingId)
+    API -> DBUtils: isListingSaved(userId, listingId)
+    DBUtils -> Supabase: from('saved_listings').select()
+    Supabase --> DBUtils: Return result
+    DBUtils --> API: Return boolean
+    API --> ListingView: Set isSaved state
+    
+    ListingView -> User: Show bookmark button with correct state
+    
+    User -> ListingView: Click bookmark button
+    ListingView -> ListingView: handleBookmarkListing()
+    
+    alt listing not saved
+        ListingView -> API: saveListing(userId, listingId)
+        API -> DBUtils: saveListing(userId, listingId)
+        
+        DBUtils -> Supabase: Check if already saved
+        Supabase --> DBUtils: Return existing saved status
+        
+        alt not already saved
+            DBUtils -> Supabase: from('saved_listings').insert()
+            Supabase --> DBUtils: Return saved listing
+            DBUtils --> API: Return saved listing
+            API --> ListingView: Return success
+            ListingView -> ListingView: setIsSaved(true)
+        else already saved
+            DBUtils --> API: Return error
+            API --> ListingView: Show error
+        end
+        
+    else listing already saved
+        ListingView -> API: unsaveListing(userId, listingId)
+        API -> DBUtils: unsaveListing(userId, listingId)
+        DBUtils -> Supabase: from('saved_listings').delete()
+        Supabase --> DBUtils: Confirm deletion
+        DBUtils --> API: Return success
+        API --> ListingView: Return success
+        ListingView -> ListingView: setIsSaved(false)
+    end
+else no session
+    ListingView -> Router: router.push('/login')
+end
+
+' View Saved Listings Flow
+User -> SavedView: Navigate to saved listings
+SavedView -> SavedView: useEffect hook runs
+SavedView -> SavedView: fetchSavedListings()
+
+SavedView -> Supabase: auth.getSession()
+
+alt session exists
+    Supabase --> SavedView: Return session
+    
+    SavedView -> API: getUserSavedListings(userId)
+    API -> DBUtils: getUserSavedListings(userId)
+    DBUtils -> Supabase: from('saved_listings').select() with join
+    Supabase --> DBUtils: Return saved listings with details
+    
+    ' Process listings
+    DBUtils -> DBUtils: Transform data structure
+    
+    ' Get metadata for listings
+    loop for each listing (batched)
+        DBUtils -> Supabase: Get author profile
+        DBUtils -> Supabase: Get listing ratings
+        Supabase --> DBUtils: Return metadata
+    end
+    
+    DBUtils --> API: Return processed listings
+    API --> SavedView: Return listings
+    
+    SavedView -> SavedView: Set listings state
+    SavedView -> SavedView: Group by category
+    SavedView -> User: Display saved listings by category
+    
+    ' Filter by Type
+    User -> SavedView: Select listing type filter
+    SavedView -> SavedView: handleListingTypeSelect(type)
+    SavedView -> SavedView: Filter listings by type
+    SavedView -> SavedView: Re-group by category
+    SavedView -> User: Update listings display
+    
+    ' View Category
+    User -> SavedView: Click category
+    SavedView -> Router: Navigate to saved-listings/category/slug
+    Router -> CategoryView: Load category view
+    
+    CategoryView -> CategoryView: Get category from slug
+    CategoryView -> API: getUserSavedListings(userId, type, category)
+    API -> DBUtils: getUserSavedListings(userId, type, category)
+    DBUtils -> Supabase: Query with filters
+    Supabase --> DBUtils: Return filtered listings
+    DBUtils --> API: Return listings
+    API --> CategoryView: Return listings
+    CategoryView -> User: Show filtered listings
+else no session
+    SavedView -> Router: router.push('/login')
+end
+@enduml

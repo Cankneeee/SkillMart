@@ -1,0 +1,129 @@
+@startuml SkillMart-Database-Annotated-ERD
+
+' Style and Formatting
+skinparam classAttributeIconSize 0
+skinparam linetype polyline
+skinparam class {
+    BackgroundColor white
+    ArrowColor #A80036
+    BorderColor #A80036
+    FontName Arial
+    FontSize 12
+}
+
+' Users Entity
+class Users {
+    + id : uuid <<PK>>
+    + email : string
+    + username : string
+}
+
+' Profiles Entity
+class Profiles {
+    + id : uuid <<PK, FK>>
+    + email : string
+    + username : string
+    + profile_picture : string
+}
+
+' Listings Entity
+class Listings {
+    + id : uuid <<PK>>
+    + user_id : uuid <<FK>>
+    + title : string
+    + description : string
+    + listing_type : string
+    + category : string
+    + price : decimal
+    + image_url : string
+    + created_at : timestamp
+    + updated_at : timestamp
+}
+
+' Listing Embeddings Entity
+class ListingEmbeddings {
+    + id : uuid <<PK, FK>>
+    + embedding : vector
+    + created_at : timestamp
+    + updated_at : timestamp
+}
+
+' Listing Summaries Entity
+class ListingSummaries {
+    + listing_id : uuid <<PK, FK>>
+    + summary : text
+    + pros : text[]
+    + cons : text[]
+    + needs_update : boolean
+    + created_at : timestamp
+    + updated_at : timestamp
+}
+
+' Reviews Entity
+class Reviews {
+    + id : uuid <<PK>>
+    + listing_id : uuid <<FK>>
+    + user_id : uuid <<FK>>
+    + rating : smallint
+    + comment : text
+    + created_at : timestamp
+    + updated_at : timestamp
+}
+
+' Review Embeddings Entity
+class ReviewEmbeddings {
+    + id : uuid <<PK, FK>>
+    + embedding : vector
+    + created_at : timestamp
+}
+
+' Saved Listings Entity
+class SavedListings {
+    + id : uuid <<PK>>
+    + user_id : uuid <<FK>>
+    + listing_id : uuid <<FK>>
+    + saved_at : timestamp
+}
+
+' Chat Sessions Entity
+class ChatSessions {
+    + id : uuid <<PK>>
+    + user_id : uuid <<FK>>
+    + name : string
+    + created_at : timestamp
+    + updated_at : timestamp
+}
+
+' Chat Messages Entity
+class ChatMessages {
+    + id : uuid <<PK>>
+    + session_id : uuid <<FK>>
+    + sender : string
+    + text : text
+    + created_at : timestamp
+}
+
+' Relationship Annotations
+Users }|--|| Profiles : "1:1 User Profile\n- Each user has exactly one profile\n- Profile extends user information"
+
+Users ||--o{ Listings : "1:N User Listings\n- One user can create multiple listings\n- Listings tracked by user_id"
+
+Users ||--o{ Reviews : "1:N User Reviews\n- User can write multiple reviews\n- Reviews linked by user_id"
+
+Users ||--o{ SavedListings : "1:N Saved Listings\n- User can save multiple listings\n- Bookmarking mechanism"
+
+Users ||--o{ ChatSessions : "1:N Chat Sessions\n- User can have multiple chat sessions\n- Support for different conversation contexts"
+
+Listings ||--|| ListingEmbeddings : "1:1 Listing Embedding\n- Each listing has a unique vector embedding\n- Enables semantic search and recommendations"
+
+Listings ||--|| ListingSummaries : "1:1 Listing Summary\n- AI-generated summary for each listing\n- Tracks summary update status"
+
+Listings ||--o{ Reviews : "1:N Listing Reviews\n- One listing can have multiple reviews\n- Reviews aggregated by listing_id"
+
+Listings ||--o{ SavedListings : "1:N Saved Listings\n- Multiple users can save a listing\n- Tracks saved/bookmarked listings"
+
+Reviews ||--|| ReviewEmbeddings : "1:1 Review Embedding\n- Each review has a unique vector embedding\n- Supports advanced review analysis"
+
+ChatSessions ||--o{ ChatMessages : "1:N Chat Messages\n- One chat session can have multiple messages\n- Maintains conversation context"
+
+@enduml

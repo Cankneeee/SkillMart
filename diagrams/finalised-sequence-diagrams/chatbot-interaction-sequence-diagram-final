@@ -1,0 +1,143 @@
+@startuml
+!define SEQUENCE
+title Chatbot Interaction Sequence Diagram
+autonumber
+
+actor User
+participant ChatUI as "Chatbot Component"
+participant ChatAPI as "Chat API"
+participant Supabase
+participant OpenAI
+
+' Initialize Chatbot
+User -> ChatUI: Click chat button
+ChatUI -> ChatUI: toggleChatbot()
+ChatUI -> ChatUI: setIsOpen(true)
+
+' Check for existing sessions
+ChatUI -> Supabase: auth.getSession()
+
+alt session exists
+    Supabase --> ChatUI: Return session
+    ChatUI -> Supabase: from('chat_sessions').select()
+    Supabase --> ChatUI: Return saved sessions
+    
+    alt sessions found
+        ChatUI -> Supabase: from('chat_messages').select() for each session
+        Supabase --> ChatUI: Return messages
+        ChatUI -> ChatUI: setSessions(sessionsWithMessages)
+        ChatUI -> ChatUI: setCurrentSessionId(first session id)
+    end
+else no session
+    ChatUI -> ChatUI: Use default session
+end
+
+ChatUI -> User: Display chat interface
+
+' Send Message Flow
+User -> ChatUI: Type message
+User -> ChatUI: Submit message
+
+ChatUI -> ChatUI: handleSendMessage()
+ChatUI -> ChatUI: Add user message to UI state
+ChatUI -> ChatUI: setInputValue("")
+ChatUI -> ChatUI: setIsTyping(true)
+
+ChatUI -> ChatAPI: POST /api/chat (message, sessionId, history)
+
+ChatAPI -> ChatAPI: Parse request
+
+alt sessionId starts with 'session-'
+    ChatAPI -> Supabase: auth.getUser()
+    
+    alt user authenticated
+        Supabase --> ChatAPI: Return user
+        ChatAPI -> Supabase: Create permanent session
+        Supabase --> ChatAPI: Return new sessionId
+    else not authenticated
+        ChatAPI -> ChatAPI: Continue with temporary session
+    end
+end
+
+' Store message
+ChatAPI -> Supabase: Insert user message
+
+' Generate embedding
+ChatAPI -> OpenAI: Create embedding for message
+OpenAI --> ChatAPI: Return embedding
+
+' Find relevant context
+ChatAPI -> Supabase: rpc('match_listings', query)
+Supabase --> ChatAPI: Return relevant listings
+
+' Extract listing IDs from messages
+ChatAPI -> ChatAPI: Extract IDs from messages
+ChatAPI -> Supabase: rpc('similar_listings')
+Supabase --> ChatAPI: Return similar listings
+
+' Find category information
+ChatAPI -> ChatAPI: Extract mentioned categories
+ChatAPI -> Supabase: Find category listings
+Supabase --> ChatAPI: Return category info
+
+' Generate AI response
+ChatAPI -> OpenAI: Generate chat completion
+OpenAI --> ChatAPI: Return AI message
+
+' Store bot response
+ChatAPI -> Supabase: Insert bot message
+
+ChatAPI --> ChatUI: Return { response, sessionId }
+
+ChatUI -> ChatUI: Update session with bot response
+ChatUI -> ChatUI: setIsTyping(false)
+ChatUI -> User: Display bot message
+
+' Manage Chat Sessions (only if authenticated)
+User -> ChatUI: Click "Manage Sessions"
+ChatUI -> ChatUI: setShowSessionManager(true)
+ChatUI -> User: Show session management interface
+
+alt create new session
+    User -> ChatUI: Enter session name
+    User -> ChatUI: Click create button
+    ChatUI -> ChatUI: createNewSession()
+    ChatUI -> ChatUI: Generate temp ID
+    ChatUI -> ChatUI: Add to sessions state
+    ChatUI -> ChatUI: setCurrentSessionId(tempId)
+    ChatUI -> ChatUI: setShowSessionManager(false)
+
+else rename session
+    User -> ChatUI: Click edit icon
+    ChatUI -> ChatUI: startEditingSession(id, name)
+    User -> ChatUI: Enter new name
+    User -> ChatUI: Save changes
+    
+    ChatUI -> ChatUI: saveSessionName(id)
+    
+    alt not a temporary session
+        ChatUI -> Supabase: Update session name
+        Supabase --> ChatUI: Confirm update
+    end
+    
+    ChatUI -> ChatUI: Update sessions state
+
+else delete session
+    User -> ChatUI: Click delete icon
+    ChatUI -> ChatUI: setShowDeleteModal(true)
+    User -> ChatUI: Confirm deletion
+    
+    alt not a temporary session
+        ChatUI -> Supabase: Delete session
+    end
+    
+    ChatUI -> ChatUI: Remove from sessions state
+    ChatUI -> ChatUI: Update currentSessionId if needed
+
+else switch session
+    User -> ChatUI: Click on session
+    ChatUI -> ChatUI: switchSession(sessionId)
+    ChatUI -> ChatUI: setCurrentSessionId(sessionId)
+    ChatUI -> ChatUI: setShowSessionManager(false)
+end
+@enduml

@@ -1,0 +1,95 @@
+@startuml
+!define SEQUENCE
+title Browsing and Searching Sequence Diagram
+autonumber
+
+actor User
+participant BrowseComp as "BrowseListings"
+participant NavBar as "NavigationBar"
+participant SearchAlgorithm as "SearchAlgorithm"
+participant DBUtils as "Database Utils"
+participant Supabase
+participant Router
+
+' Browsing Flow
+User -> BrowseComp: Visit browse page
+BrowseComp -> BrowseComp: useEffect hook runs
+BrowseComp -> BrowseComp: fetchListings()
+
+alt search param exists in URL
+    BrowseComp -> SearchAlgorithm: searchListings(query, type, category)
+    SearchAlgorithm -> Supabase: Execute search queries
+    Supabase --> SearchAlgorithm: Return search results
+    SearchAlgorithm --> BrowseComp: Return matching listings
+else no search param
+    BrowseComp -> DBUtils: getListings(type, category)
+    DBUtils -> Supabase: from('listings').select()
+    Supabase --> DBUtils: Return listings
+    DBUtils --> BrowseComp: Return listings
+end
+
+' Get metadata for listings
+loop for listings in batches
+    BrowseComp -> DBUtils: getUserProfile(listing.user_id)
+    DBUtils -> Supabase: from('profiles').select()
+    Supabase --> DBUtils: Return profile
+    DBUtils --> BrowseComp: Return author data
+    
+    BrowseComp -> DBUtils: getListingRating(listing.id)
+    DBUtils -> Supabase: from('reviews').select()
+    Supabase --> DBUtils: Return ratings
+    DBUtils --> BrowseComp: Return average and count
+end
+
+BrowseComp -> BrowseComp: Organize by category
+BrowseComp -> User: Display listings by category
+
+' Filter by Type
+User -> BrowseComp: Select listing type filter
+BrowseComp -> BrowseComp: setSelectedListingType(type)
+BrowseComp -> BrowseComp: useEffect triggered by state change
+BrowseComp -> BrowseComp: Re-filter listings
+BrowseComp -> User: Update listings display
+
+' Category Browsing
+User -> BrowseComp: Click category link
+BrowseComp -> CategoryComp: Navigate to category page
+CategoryComp -> CategoryComp: getCategoryNameFromSlug(slug)
+
+alt category valid
+    CategoryComp -> DBUtils: getListings(type, category)
+    DBUtils -> Supabase: from('listings').select()
+    Supabase --> DBUtils: Return category listings
+    DBUtils --> CategoryComp: Return listings
+    CategoryComp -> User: Display category listings
+else category not found
+    CategoryComp -> Router: router.push('/browse')
+end
+
+' Search Flow via Nav Bar
+User -> NavBar: Enter search query
+User -> NavBar: Submit search
+NavBar -> Router: router.push(`/browse?q=${query}`)
+
+' Search Execution
+BrowseComp -> SearchAlgorithm: searchListings(query, type, category)
+
+' Term-based search implementation
+SearchAlgorithm -> SearchAlgorithm: Split query into terms
+loop for each search term
+    SearchAlgorithm -> Supabase: Title search: .ilike('title', `%${term}%`)
+    Supabase --> SearchAlgorithm: Return title matches
+    
+    SearchAlgorithm -> Supabase: Description search: .ilike('description', `%${term}%`)
+    Supabase --> SearchAlgorithm: Return description matches
+    
+    SearchAlgorithm -> Supabase: Username search: profiles with matching usernames
+    Supabase --> SearchAlgorithm: Return profiles
+    SearchAlgorithm -> Supabase: Find listings by these users
+    Supabase --> SearchAlgorithm: Return user listings
+end
+
+SearchAlgorithm -> SearchAlgorithm: Deduplicate and sort results
+SearchAlgorithm --> BrowseComp: Return search results
+BrowseComp -> User: Display search results
+@enduml

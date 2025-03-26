@@ -1,0 +1,126 @@
+@startuml
+!define SEQUENCE
+title Listing Management Sequence Diagram
+autonumber
+
+actor User
+participant ListingForm as "ListingCreationForm"
+participant ImageUtils as "Image Utils"
+participant ListingAPI as "Listing API"
+participant DBUtils as "Database Utils"
+participant Supabase
+participant Router
+
+' Create Listing Flow
+User -> ListingForm: Fill listing details
+User -> ListingForm: Upload image
+ListingForm -> ImageUtils: handleImageChange(file)
+ImageUtils --> ListingForm: Update image preview
+
+User -> ListingForm: Submit form
+ListingForm -> ListingForm: validateForm()
+
+alt validation fails
+    ListingForm -> User: Display validation errors
+else form valid
+    ListingForm -> Supabase: auth.getSession()
+    
+    alt no session
+        Supabase --> ListingForm: No session
+        ListingForm -> Router: router.push('/login')
+    else session found
+        Supabase --> ListingForm: Return session
+        
+        alt image uploaded
+            ListingForm -> ImageUtils: uploadListingPicture(userId, file)
+            ImageUtils -> Supabase: storage.upload(filePath, file)
+            Supabase --> ImageUtils: Return public URL
+            ImageUtils --> ListingForm: Return imageUrl
+        end
+        
+        ListingForm -> ListingAPI: createListing(listingData)
+        ListingAPI -> DBUtils: createListing(listingData)
+        DBUtils -> Supabase: from('listings').insert(data)
+        Supabase --> DBUtils: Return created listing
+        DBUtils --> ListingAPI: Return listing
+        ListingAPI --> ListingForm: Return result
+        
+        ListingForm -> Router: router.push('/my-listings')
+    end
+end
+
+' Edit Listing Flow
+User -> ListingView: View listing
+ListingView -> Supabase: auth.getSession()
+Supabase --> ListingView: Return session
+
+ListingView -> ListingAPI: getListingById(id)
+ListingAPI -> DBUtils: getListingById(id)
+DBUtils -> Supabase: from('listings').select()
+Supabase --> DBUtils: Return listing
+DBUtils --> ListingAPI: Return listing
+ListingAPI --> ListingView: Display listing
+
+alt user is owner
+    ListingView -> User: Show edit controls
+    User -> ListingView: Click edit button
+    ListingView -> ListingView: setIsEditingListing(true)
+    User -> ListingView: Make changes
+    
+    alt change image
+        User -> ListingView: Upload new image
+        ListingView -> ImageUtils: handleImageChange(file)
+        ImageUtils --> ListingView: Update image preview
+    end
+    
+    User -> ListingView: Save changes
+    
+    alt image changed
+        ListingView -> ImageUtils: uploadListingPicture(userId, file)
+        ImageUtils -> Supabase: storage.upload(filePath, file)
+        Supabase --> ImageUtils: Return public URL
+        ImageUtils --> ListingView: Return imageUrl
+    end
+    
+    ListingView -> ListingAPI: updateListing(id, userId, data)
+    ListingAPI -> DBUtils: updateListing(id, userId, data)
+    DBUtils -> Supabase: Check if listing belongs to user
+    Supabase --> DBUtils: Return ownership status
+    
+    alt user owns listing
+        DBUtils -> Supabase: from('listings').update(data)
+        Supabase --> DBUtils: Return updated listing
+        DBUtils --> ListingAPI: Return updated listing
+        ListingAPI --> ListingView: Update listing display
+        ListingView -> ListingView: setIsEditingListing(false)
+    else unauthorized
+        DBUtils --> ListingAPI: Return null
+        ListingAPI --> ListingView: Show error
+    end
+end
+
+' Delete Listing Flow
+User -> ListingView: View listing
+alt user is owner
+    ListingView -> User: Show delete button
+    User -> ListingView: Click delete
+    ListingView -> User: Show confirmation modal
+    User -> ListingView: Confirm deletion
+    
+    ListingView -> ListingAPI: deleteListing(id, userId)
+    ListingAPI -> DBUtils: deleteListing(id, userId)
+    DBUtils -> Supabase: Check if listing belongs to user
+    Supabase --> DBUtils: Return ownership status
+    
+    alt user owns listing
+        DBUtils -> Supabase: from('listings').delete()
+        Supabase --> DBUtils: Confirm deletion
+        DBUtils --> ListingAPI: Return success
+        ListingAPI --> ListingView: Return success
+        ListingView -> Router: router.push('/my-listings')
+    else unauthorized
+        DBUtils --> ListingAPI: Return false
+        ListingAPI --> ListingView: Show error
+    end
+end
+@enduml

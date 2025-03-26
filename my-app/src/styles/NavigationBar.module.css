@@ -1,0 +1,296 @@
+/* Navbar Container */
+.navbar {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--navbar-bg);
+  color: var(--header-text);
+  padding: 12px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Left Section (Brand + Explore) */
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+/* Brand (SkillMart Title) */
+.brand {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xl);
+  color: var(--header-text);
+  text-decoration: none;
+  margin-right: 10px;
+}
+
+.brand:hover {
+  color: var(--hover-header);
+}
+
+/* Navbar Links */
+.navLink {
+  color: var(--header-text) !important;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  text-decoration: none;
+}
+
+.navLink:hover {
+  color: var(--hover-header) !important;
+}
+
+/* Navbar toggle button styling */
+.navbarToggle {
+  border: none !important;
+  padding: 4px 8px !important;
+}
+
+.navbarToggle:focus {
+  box-shadow: none !important;
+}
+
+/* Center Section: Search Bar */
+.searchForm {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin: 0 15px;
+}
+
+.searchContainer {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  min-width: 150px;
+  transition: width 0.3s ease-in-out;
+}
+
+.searchBar {
+  width: 100%;
+  padding: 10px 35px;
+  border: 1px solid var(--navbar-bg);
+  border-radius: 5px;
+  background-color: var(--body-bg);
+}
+
+/* Search Bar Active & Hover State */
+.searchBar:focus,
+.searchBar:hover {
+  border-color: var(--hover-button) !important;
+  outline: none;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--button-bg);
+}
+
+/* Right Section (Log In + Sign Up) */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Fix for Sign Up button */
+.btnSignup {
+  background-color: var(--button-bg) !important;
+  border: none;
+  color: var(--button-text) !important;
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.btnSignup:hover {
+  background-color: var(--hover-button) !important;
+}
+
+/* Profile Dropdown */
+.profileDropdown {
+  background-color: var(--navbar-bg) !important;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  /* Use justify-content instead of gap to keep components together */
+  justify-content: center;
+}
+
+/* Profile Username */
+.username {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--header-text);
+  transition: color 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.username:hover,
+.username:active {
+  color: var(--hover-header) !important;
+}
+
+/* Profile Picture */
+.profilePicture {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Default User Icon */
+.profileIcon {
+  font-size: var(--font-size-icon);
+  color: var(--header-text);
+}
+
+/* Dropdown Menu */
+.dropdownMenu {
+  background-color: var(--body-bg) !important;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  padding: 10px 0;
+}
+
+/* Dropdown Items (Reverted Thickness) */
+.dropdownItem {
+  color: var(--header-text) !important;
+  font-size: var(--font-size-base) !important;
+  font-weight: var(--font-weight-normal) !important;
+  padding: 10px 15px !important;
+  width: 100% !important;
+  text-align: left !important;
+  transition: color 0.3s ease-in-out;
+}
+
+.dropdownItem:hover,
+.dropdownItem:active {
+  background-color: var(--hover-button) !important;
+  color: var(--button-text) !important;
+}
+
+/* Responsive styles */
+@media (max-width: 991.98px) {
+  /* Improved collapsed navbar styles */
+  .navbar {
+    padding: 10px 15px;
+  }
+  
+  .navContainer {
+    flex-wrap: nowrap;
+  }
+  
+  /* Make the navbar collapse content a flex column with proper spacing */
+  .navbar-collapse {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding-top: 10px;
+  }
+  
+  /* Improve the explore link positioning */
+  .navLinks {
+    width: 100%;
+    margin: 0 0 10px !important;
+    padding: 5px 0;
+  }
+  
+  /* Better search bar positioning */
+  .searchForm {
+    order: 0;
+    margin: 10px 0;
+    width: 100%;
+  }
+  
+  .searchContainer {
+    width: 100%;
+    max-width: none;
+  }
+  
+  /* Improve login/signup/profile section */
+  .rightSection {
+    width: 100%;
+    justify-content: flex-start;
+    margin: 10px 0 5px;
+    padding: 5px 0;
+  }
+  
+  /* Make the profile dropdown match full width in mobile but keep contents grouped */
+  .profileDropdown {
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 5px;
+  }
+  
+  /* Ensure dropdown menu is full width */
+  .dropdownMenu {
+    width: 100%;
+  }
+  
+  /* Make login and signup buttons more prominent */
+  .rightSection .navLink,
+  .rightSection .btnSignup {
+    padding: 10px 15px !important;
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* Adjust login button in mobile */
+  .rightSection .navLink {
+    border: 1px solid var(--button-bg);
+    border-radius: 5px;
+    margin-right: 10px;
+  }
+  
+  /* Make right section use flex appropriate for buttons */
+  .rightSection:not(:has(.profileDropdown)) {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* Keep username and profile icon together on all screen sizes */
+  @media (max-width: 576px) {
+    .username {
+      display: block;
+    }
+    
+    .profileDropdown {
+      justify-content: flex-end;
+    }
+
+    /* Keep the dropdown toggle button arrow with the user content */
+    .dropdown-toggle::after {
+      margin-left: 10px;
+    }
+  }
+}
+
+/* When expanded in mobile view ensure proper alignment */
+.navbar-collapse.show, 
+.navbar-collapse.collapsing {
+  padding-bottom: 15px;
+}

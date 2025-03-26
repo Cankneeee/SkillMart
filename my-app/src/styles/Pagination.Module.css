@@ -1,0 +1,45 @@
+/* Common Pagination Styles - To be extracted to a separate shared module */
+.paginationContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .paginationContainer :global(.pagination) {
+    margin-bottom: 0;
+  }
+  
+  .paginationContainer :global(.page-item .page-link) {
+    color: var(--button-bg);
+    border-color: var(--navbar-bg);
+    background-color: var(--body-bg);
+    font-family: var(--font-roboto), sans-serif;
+  }
+  
+  .paginationContainer :global(.page-item.active .page-link) {
+    color: var(--button-text);
+    background-color: var(--hover-button);
+    border-color: var(--hover-button);
+  }
+  
+  .paginationContainer :global(.page-item .page-link:focus) {
+    box-shadow: 0 0 0 0.2rem rgba(126, 87, 194, 0.25);
+  }
+  
+  .paginationContainer :global(.page-item .page-link:hover) {
+    background-color: #efefef;
+    color: var(--hover-header);
+  }
+  
+  .paginationContainer :global(.page-item.active .page-link:hover) {
+    background-color: var(--hover-header);
+    color: var(--button-text);
+  }
+  
+  .paginationContainer :global(.page-item.disabled .page-link) {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: var(--body-bg);
+    border-color: var(--navbar-bg);
+  }

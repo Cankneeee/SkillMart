@@ -1,0 +1,188 @@
+/* globals.css */
+
+/* 1. Tailwind Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2. Define Custom Color Palette & Font Variables */
+:root {
+  /* Color Palette */
+  --body-bg: #F9F7F7;
+  --navbar-bg: #DBE2EF;
+  --header-text: #112D4E;
+  --button-bg: #3F72AF;
+  --button-text: #F9F7F7;
+  --hover-header: #5E35B1;
+  --hover-button: #7E57C2;
+
+  /* Error Colors */
+  --error-header-text: #9A031E;
+  --error-button: #D90429;
+
+  /* Typography - Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Typography - Font Sizes */
+  --font-size-base: 1rem;      /* 16px - standard text, nav links */
+  --font-size-lg: 1.25rem;     /* 20px - subheadings */
+  --font-size-xl: 1.5rem;      /* 24px - brand, logo */
+  --font-size-icon: 2rem;      /* 32px - icons */
+
+  /* Font Variables (Injected via Next.js Font API) */
+  font-family: var(--font-roboto), sans-serif;
+
+  /* Additional CSS variables to add to :root in globals.css */
+
+  /* Spacing System */
+  --spacing-xs: 0.5rem;    /* 8px */
+  --spacing-sm: 0.75rem;   /* 12px */
+  --spacing-md: 1rem;      /* 16px */
+  --spacing-lg: 1.25rem;   /* 20px */
+  --spacing-xl: 1.5rem;    /* 24px */
+
+  /* Border Radius */
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 0 5px rgba(126, 87, 194, 0.5);
+  --shadow-error: 0 0 5px rgba(255, 0, 0, 0.5);
+
+  /* Form Fields */
+  --input-border: #ccc;
+  --error-background: rgba(217, 4, 41, 0.1);
+}
+
+/* 3. Global Base Styles */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--body-bg);
+  color: var(--header-text);
+  font-family: var(--font-roboto), sans-serif;
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-base);
+}
+
+/* 4. Headings Use Montserrat */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: var(--font-weight-bold);
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: var(--font-size-xl); }
+h4 { font-size: var(--font-size-lg); }
+h5, h6 { font-size: var(--font-size-base); }
+
+/* 5. Global Navbar Styles */
+.navbar {
+  background-color: var(--navbar-bg);
+  color: var(--header-text);
+}
+
+/* 6. Button Styles */
+.button {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-weight: var(--font-weight-semibold);
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: var(--hover-button);
+}
+
+/* 7. Error Styles */
+.text-error {
+  color: var(--error-header-text);
+}
+
+.bg-error {
+  background-color: var(--error-button);
+}
+
+.bg-error:hover {
+  background-color: darken(var(--error-button), 10%);
+}
+
+/* 8. Link Styles */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 9. Utility Classes */
+.text-primary {
+  color: var(--header-text);
+}
+
+.bg-primary {
+  background-color: var(--button-bg);
+}
+
+.bg-hover:hover {
+  background-color: var(--hover-button);
+}
+
+.font-normal {
+  font-weight: var(--font-weight-normal);
+}
+
+.font-medium {
+  font-weight: var(--font-weight-medium);
+}
+
+.font-semibold {
+  font-weight: var(--font-weight-semibold);
+}
+
+.font-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+/* 10. Bootstrap Overrides - Moved from module CSS files */
+/* Accordion styles - From Listing.module.css */
+.accordion-header {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: var(--font-weight-bold);
+}
+
+.accordion-body {
+  font-family: var(--font-roboto), sans-serif;
+  font-weight: var(--font-weight-normal);
+}
+
+.accordion-button.collapsed:hover {
+  color: var(--hover-header) !important;
+  background-color: var(--body-bg) !important;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--hover-button) !important;
+  color: var(--button-text) !important;
+}
+
+/* Dropdown item - From ReviewsSection.module.css and Listing.module.css */
+.dropdown-item.active {
+  background-color: var(--body-bg) !important;
+  color: var(--hover-header) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+/* Card styles - From ReviewsSection.module.css */
+.card {
+  background-color: var(--body-bg) !important;
+}

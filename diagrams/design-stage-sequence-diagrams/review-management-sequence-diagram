@@ -1,0 +1,173 @@
+@startuml
+
+title Review Management Sequence Diagram (Design Phase)
+autonumber
+
+actor User
+participant UI as "User Interface"
+participant ValidationUtil as "Validation Utility"
+participant DBUtil as "Database Utility"
+participant AuthUtil as "Auth Utility"
+participant AIUtil as "AI Utility"
+participant Supabase
+participant OpenAI
+
+' View Reviews Flow
+User -> UI: View listing details
+UI -> DBUtil: getListingReviews(listingId)
+DBUtil -> Supabase: Query reviews with author info
+Supabase --> DBUtil: Return reviews data
+DBUtil --> UI: Return formatted reviews
+
+UI -> DBUtil: getListingRating(listingId)
+DBUtil -> Supabase: Calculate average rating
+Supabase --> DBUtil: Return rating stats
+DBUtil --> UI: Return rating data
+
+alt multiple reviews exist
+    UI -> AIUtil: getReviewSummary(listingId)
+    
+    alt summary exists
+        AIUtil -> Supabase: Query existing summary
+        Supabase --> AIUtil: Return cached summary
+    else generate new summary
+        AIUtil -> DBUtil: getReviewContent(listingId)
+        DBUtil -> Supabase: Get review texts
+        Supabase --> DBUtil: Return review content
+        DBUtil --> AIUtil: Return review texts
+        
+        AIUtil -> OpenAI: Generate summary with pros/cons
+        OpenAI --> AIUtil: Return analysis
+        
+        AIUtil -> Supabase: Store summary for future use
+        Supabase --> AIUtil: Confirm storage
+    end
+    
+    AIUtil --> UI: Return review summary
+    UI -> User: Display summary with reviews
+else
+    UI -> User: Display reviews without summary
+end
+
+' Create Review Flow
+User -> UI: Click "Leave Review"
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user data
+
+alt user authenticated
+    UI -> UI: Show review form
+    User -> UI: Enter rating and comment
+    User -> UI: Submit review
+    
+    UI -> ValidationUtil: Validate review content
+    ValidationUtil --> UI: Return validation result
+    
+    alt validation passes
+        UI -> DBUtil: checkReviewEligibility(userId, listingId)
+        DBUtil -> Supabase: Check ownership and previous reviews
+        Supabase --> DBUtil: Return eligibility status
+        
+        alt eligible to review
+            UI -> DBUtil: createReview(userId, listingId, rating, comment)
+            DBUtil -> Supabase: Insert review
+            Supabase --> DBUtil: Return created review
+            
+            ' Generate embedding for review
+            UI -> AIUtil: createReviewEmbedding(reviewId, text)
+            AIUtil -> OpenAI: Generate embedding
+            OpenAI --> AIUtil: Return embedding vector
+            AIUtil -> Supabase: Store review embedding
+            Supabase --> AIUtil: Confirm storage
+            
+            ' Mark summary for update
+            DBUtil -> Supabase: Mark listing summary for update
+            Supabase --> DBUtil: Confirm update
+            
+            DBUtil --> UI: Return success
+            UI -> UI: Add review to display
+            UI -> UI: Update average rating
+        else not eligible
+            DBUtil --> UI: Return reason (own listing, already reviewed)
+            UI -> User: Show eligibility error
+        end
+    else validation fails
+        UI -> User: Show validation errors
+    end
+else not authenticated
+    UI -> User: Redirect to login page
+end
+
+' Edit Review Flow
+User -> UI: Click edit on review
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user data
+
+UI -> DBUtil: checkReviewOwnership(userId, reviewId)
+DBUtil -> Supabase: Verify review ownership
+Supabase --> DBUtil: Return ownership status
+
+alt user owns review
+    UI -> UI: Show edit interface
+    User -> UI: Edit rating/comment
+    User -> UI: Submit changes
+    
+    UI -> ValidationUtil: Validate edited content
+    ValidationUtil --> UI: Return validation result
+    
+    alt validation passes
+        UI -> DBUtil: updateReview(reviewId, rating, comment)
+        DBUtil -> Supabase: Update review record
+        Supabase --> DBUtil: Confirm update
+        
+        ' Update embedding for review
+        UI -> AIUtil: updateReviewEmbedding(reviewId, newText)
+        AIUtil -> OpenAI: Generate new embedding
+        OpenAI --> AIUtil: Return embedding vector
+        AIUtil -> Supabase: Update review embedding
+        Supabase --> AIUtil: Confirm update
+        
+        ' Mark summary for update
+        DBUtil -> Supabase: Mark listing summary for update
+        Supabase --> DBUtil: Confirm update
+        
+        DBUtil --> UI: Return success
+        UI -> UI: Update review in display
+        UI -> UI: Update average rating
+    else validation fails
+        UI -> User: Show validation errors
+    end
+else not owner
+    UI -> User: Show error message
+end
+
+' Delete Review Flow
+User -> UI: Click delete on review
+UI -> UI: Show confirmation dialog
+User -> UI: Confirm deletion
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user data
+
+UI -> DBUtil: checkReviewOwnership(userId, reviewId)
+DBUtil -> Supabase: Verify review ownership
+Supabase --> DBUtil: Return ownership status
+
+alt user owns review
+    UI -> DBUtil: deleteReview(reviewId)
+    DBUtil -> Supabase: Delete review record
+    Supabase --> DBUtil: Confirm deletion
+    
+    ' Mark summary for update
+    DBUtil -> Supabase: Mark listing summary for update
+    Supabase --> DBUtil: Confirm update
+    
+    DBUtil --> UI: Return success
+    UI -> UI: Remove review from display
+    UI -> UI: Update average rating
+else not owner
+    UI -> User: Show error message
+end
+
+@enduml

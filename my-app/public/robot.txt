@@ -1,0 +1,44 @@
+# Robots.txt for SkillMart
+
+# Sitemap location
+Sitemap: https://skillmart.com/sitemap.xml
+
+# Default policy
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /test-error/
+
+# Specific route restrictions
+Disallow: /login
+Disallow: /signup
+Disallow: /forget-password
+Disallow: /reset-password
+Disallow: /profile
+
+# Crawl-delay to prevent overwhelming the server
+Crawl-delay: 10
+
+# Bot-specific rules
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Additional bot rules
+User-agent: Yandex
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# AI and research bots
+User-agent: GPTBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /

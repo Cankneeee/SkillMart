@@ -1,0 +1,133 @@
+/* ReviewsSection.module.css */
+
+/* Sorting styles */
+.sortLabel {
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-medium);
+  margin-right: var(--spacing-xs);
+  font-family: var(--font-roboto), sans-serif;
+}
+
+/* Style the dropdown itself */
+.sortSelect {
+  max-width: 150px;
+  background-color: var(--body-bg) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px !important;
+  font-size: 0.9rem;
+  color: var(--header-text);
+  box-shadow: none !important;
+}
+
+.sortSelect:hover,
+.sortSelect:focus {
+  border-color: var(--hover-button) !important;
+}
+
+/* Custom styling for dropdown menu */
+.dropdownMenu {
+  background-color: var(--body-bg) !important;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm) !important;
+  padding: 0;
+  margin-top: var(--spacing-xs) !important;
+  min-width: 150px;
+}
+
+/* Dropdown item styling */
+.dropdownItem {
+  padding: var(--spacing-xs) var(--spacing-md) !important;
+  color: var(--header-text) !important;
+  font-size: 0.9rem !important;
+  font-weight: var(--font-weight-normal) !important;
+  font-family: var(--font-roboto), sans-serif;
+  transition: background-color 0.3s ease-in-out;
+}
+
+/* Hover state */
+.dropdownItem:hover,
+.dropdownItem:focus {
+  background-color: var(--hover-button) !important;
+  color: var(--button-text) !important;
+}
+
+/* Active/Selected state - Removed :global() */
+.dropdownItem:active,
+.dropdownItem.active {
+  background-color: var(--body-bg) !important;
+  color: var(--hover-header) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+/* Rating display styles */
+.averageRatingText {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  margin: 0;
+}
+
+.averageRatingScore {
+  font-size: 1.3rem;
+  font-weight: var(--font-weight-bold);
+  color: inherit;
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+/* Leave a review button */
+.leaveReviewButton {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+  transition: background-color 0.3s ease;
+}
+
+.leaveReviewButton:hover {
+  background-color: var(--hover-button);
+}
+
+/* AI Summary Styles - Consolidated */
+.aiSummaryAccordion {
+  background-color: var(--body-bg) !important;
+  border-color: rgba(0, 0, 0, 0.125) !important;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.aiSummaryHeader {
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: var(--font-weight-semibold);
+  background-color: #f8f9fa;
+}
+
+.aiSummaryText {
+  font-family: var(--font-roboto), sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: var(--spacing-md);
+}
+
+.summarySubheading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #495057;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+.summaryList {
+  padding-left: 1.5rem;
+  font-family: var(--font-roboto), sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.summaryListItem {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}

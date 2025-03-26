@@ -1,0 +1,552 @@
+.noSessionsMessage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  font-style: italic;
+  color: var(--header-text);
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.noActiveSessionContainer {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--body-bg);
+  padding: var(--spacing-md);
+}
+
+.noActiveSessionMessage {
+  text-align: center;
+  max-width: 80%;
+}
+
+.noActiveSessionMessage h4 {
+  margin-bottom: var(--spacing-md);
+  color: var(--header-text);
+}
+
+.noActiveSessionMessage p {
+  margin-bottom: var(--spacing-lg);
+  color: var(--header-text);
+}
+
+.createFirstSessionButton {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  color: var(--button-text);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.createFirstSessionButton:hover {
+  background-color: var(--hover-button);
+  border-color: var(--hover-button);
+}/* Chatbot.module.css */
+
+/* Container for the entire chatbot component */
+.chatbotContainer {
+  position: fixed;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  z-index: 1050;
+}
+
+/* Toggle button when chatbot is collapsed */
+.chatToggleBtn {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  color: var(--button-text);
+  box-shadow: var(--shadow-sm);
+  padding: 0;
+}
+
+.chatToggleBtn:hover,
+.chatToggleBtn:focus {
+  background-color: var(--hover-button);
+  border-color: var(--hover-button);
+}
+
+/* Main chatbot card when expanded */
+.chatCard {
+  width: 320px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--input-border);
+}
+
+/* Header section of the chat */
+.chatHeader {
+  background-color: var(--navbar-bg);
+  color: var(--header-text);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--input-border);
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  max-width: 80%;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+/* These styles are now moved to the session interface */
+
+.chatTitle {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.headerButton {
+  padding: var(--spacing-xs);
+  color: var(--header-text);
+  text-decoration: none;
+}
+
+.headerButton:hover {
+  color: var(--hover-header);
+  text-decoration: none;
+}
+
+.sessionButton {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--header-text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: calc(-1 * var(--spacing-sm));
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+
+.backButton {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--header-text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: calc(-1 * var(--spacing-sm));
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+
+.sessionButton:hover,
+.backButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--hover-header);
+  text-decoration: none;
+}
+
+/* Session manager */
+.sessionManagerContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md);
+  background-color: var(--body-bg);
+  overflow-y: auto;
+}
+
+.sessionManagerTitle {
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--header-text);
+}
+
+.sessionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: var(--spacing-md);
+}
+
+.sessionItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.editSessionForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--body-bg);
+}
+
+.editSessionInput {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+}
+
+.editSessionInput:focus {
+  border-color: var(--hover-button);
+  box-shadow: var(--shadow-md);
+}
+
+.editSessionActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.sessionButtonContainer {
+  position: relative;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sessionSelectButton {
+  flex: 1;
+  width: 100%;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  text-decoration: none;
+  transition: padding-right 0.3s ease;
+}
+
+.sessionButtonContainer:hover .sessionSelectButton {
+  padding-right: 70px; /* Make room for the controls */
+}
+
+.sessionHoverControls {
+  position: absolute;
+  top: 0;
+  right: -60px; /* Start offscreen */
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: var(--spacing-xs);
+  transition: right 0.3s ease;
+  background: linear-gradient(to right, transparent, var(--button-bg) 20%);
+  border-top-right-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.activeSession + .sessionHoverControls {
+  background: linear-gradient(to right, transparent, var(--hover-button) 20%);
+  border-top-right-radius: var(--radius-sm);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.sessionButtonContainer:hover .sessionHoverControls {
+  right: 0;
+}
+
+.sessionSelectButton:hover:not(.activeSession),
+.sessionSelectButton:focus:not(.activeSession) {
+  background-color: var(--hover-button);
+  color: var(--button-text);
+  text-decoration: none;
+}
+
+.activeSession {
+  background-color: var(--hover-button);
+  color: var(--button-text);
+}
+
+.activeSession:hover {
+  background-color: var(--hover-button);
+}
+
+.editSessionIcon,
+.deleteSessionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xs);
+  color: var(--button-text);
+  background: transparent;
+  border: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.editSessionIcon:hover,
+.deleteSessionIcon:hover {
+  opacity: 1;
+  color: var(--button-text);
+}
+
+.renameSessionButton,
+.saveSessionButton,
+.cancelEditButton {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  color: var(--button-text);
+  text-decoration: none;
+  font-size: 0.8rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.renameSessionButton:hover,
+.saveSessionButton:hover,
+.cancelEditButton:hover {
+  background-color: var(--hover-button);
+  border-color: var(--hover-button);
+  text-decoration: none;
+}
+
+.deleteSessionButton {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  border-radius: var(--radius-sm);
+  color: var(--button-text);
+  text-decoration: none;
+}
+
+.deleteSessionButton:hover,
+.deleteSessionButton:focus {
+  background-color: var(--hover-button);
+  border-color: var(--hover-button);
+  text-decoration: none;
+}
+
+.newSessionForm {
+  border-top: 1px solid var(--input-border);
+  padding-top: var(--spacing-md);
+}
+
+.newSessionForm h5 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--header-text);
+}
+
+.newSessionInput {
+  display: flex;
+}
+
+.newSessionInput input:hover,
+.newSessionInput input:focus {
+  border-color: var(--hover-button);
+  box-shadow: var(--shadow-md);
+}
+
+.createSessionButton {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  color: var(--button-text);
+  text-decoration: none;
+}
+
+.createSessionButton:hover,
+.createSessionButton:focus {
+  background-color: var(--hover-button);
+  border-color: var(--hover-button);
+  text-decoration: none;
+}
+
+/* Messages area */
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+  background-color: var(--body-bg);
+}
+
+.messageWrapper {
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+}
+
+.userMessageWrapper {
+  justify-content: flex-end;
+}
+
+.botMessageWrapper {
+  justify-content: flex-start;
+}
+
+.messageBubble {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-lg);
+  max-width: 75%;
+  word-wrap: break-word;
+}
+
+.userMessage {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border-bottom-right-radius: 0;
+}
+
+.botMessage {
+  background-color: var(--navbar-bg);
+  color: var(--header-text);
+  border-bottom-left-radius: 0;
+}
+
+/* Typing indicator */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: 0;
+  background-color: var(--navbar-bg);
+}
+
+.typingDot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--button-bg);
+  border-radius: 50%;
+  margin: 0 2px;
+}
+
+/* Input container */
+.inputContainer {
+  padding: var(--spacing-sm);
+  background-color: var(--body-bg);
+  border-top: 1px solid var(--input-border);
+}
+
+.inputForm {
+  display: flex;
+}
+
+.inputField {
+  border: 1px solid var(--input-border);
+  border-radius: 20px 0 0 20px;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.inputField:focus {
+  box-shadow: var(--shadow-md);
+  border-color: var(--button-bg);
+}
+
+.sendButton {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  border-radius: 0 20px 20px 0;
+  color: var(--button-text);
+  text-decoration: none;
+}
+
+.sendButton:hover:not(:disabled),
+.sendButton:focus:not(:disabled) {
+  background-color: var(--hover-button);
+  border-color: var(--hover-button);
+  text-decoration: none;
+}
+
+.sendButton:disabled {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  opacity: 0.7;
+}
+
+/* Delete confirmation dialog */
+.deleteConfirmOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.deleteConfirmDialog {
+  background-color: var(--body-bg);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  width: 85%;
+  max-width: 300px;
+  box-shadow: var(--shadow-md);
+}
+
+.deleteConfirmDialog h5 {
+  margin-top: 0;
+  color: var(--header-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.deleteConfirmDialog p {
+  margin-bottom: var(--spacing-md);
+  font-size: 0.9rem;
+}
+
+.deleteConfirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.cancelDeleteButton {
+  background-color: var(--navbar-bg);
+  border-color: var(--navbar-bg);
+  color: var(--header-text);
+}
+
+.cancelDeleteButton:hover {
+  background-color: var(--input-border);
+  border-color: var(--input-border);
+}
+
+.confirmDeleteButton {
+  background-color: var(--error-button);
+  border-color: var(--error-button);
+  color: var(--button-text);
+}
+
+.confirmDeleteButton:hover {
+  background-color: var(--error-header-text);
+  border-color: var(--error-header-text);
+}
+
+/* Media query for larger screens */
+@media (min-width: 576px) {
+  .chatCard {
+    width: 350px;
+  }
+}

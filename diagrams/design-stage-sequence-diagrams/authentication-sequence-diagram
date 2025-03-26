@@ -1,0 +1,98 @@
+@startuml
+
+title Authentication Sequence Diagram (Design Phase)
+autonumber
+
+actor User
+participant UI as "User Interface"
+participant AuthUtil as "Auth Utility"
+participant ValidationUtil as "Validation Utility"
+participant DBUtil as "Database Utility"
+participant Supabase
+
+' Login Flow
+User -> UI: Enter credentials and submit
+UI -> ValidationUtil: Validate input format
+ValidationUtil --> UI: Return validation result
+
+alt input validation passes
+    UI -> AuthUtil: signInWithEmail(email, password)
+    AuthUtil -> Supabase: Call authentication API
+    Supabase --> AuthUtil: Return authentication result
+    
+    alt authentication successful
+        AuthUtil --> UI: Return success with user data
+        UI -> UI: Store session information
+        UI -> User: Redirect to main page
+    else authentication failed
+        AuthUtil --> UI: Return error message
+        UI -> User: Display error message
+    end
+else input validation fails
+    UI -> User: Show validation errors
+end
+
+' Signup Flow
+User -> UI: Fill signup form and submit
+UI -> ValidationUtil: Validate all input fields
+ValidationUtil --> UI: Return validation result
+
+alt input validation passes
+    UI -> AuthUtil: checkEmailExists(email)
+    AuthUtil -> DBUtil: Query for email
+    DBUtil -> Supabase: Check email in database
+    Supabase --> DBUtil: Return result
+    DBUtil --> AuthUtil: Return email status
+    
+    alt email available
+        AuthUtil -> Supabase: Create new user account
+        Supabase --> AuthUtil: Return new user data
+        AuthUtil -> DBUtil: Create user profile
+        DBUtil -> Supabase: Insert profile record
+        Supabase --> DBUtil: Confirm creation
+        DBUtil --> AuthUtil: Return profile status
+        AuthUtil --> UI: Return success with user data
+        UI -> UI: Store session information
+        UI -> User: Redirect to main page
+    else email exists
+        AuthUtil --> UI: Return error message
+        UI -> User: Show "Email already registered" error
+    end
+else input validation fails
+    UI -> User: Show validation errors
+end
+
+' Password Reset Flow
+User -> UI: Request password reset
+UI -> UI: Show email input form
+User -> UI: Enter email and submit
+UI -> ValidationUtil: Validate email format
+ValidationUtil --> UI: Return validation result
+
+alt email validation passes
+    UI -> AuthUtil: resetPassword(email)
+    AuthUtil -> Supabase: Request password reset
+    Supabase --> AuthUtil: Confirm reset email sent
+    AuthUtil --> UI: Return confirmation
+    UI -> User: Show confirmation message
+    
+    User -> UI: Click reset link in email
+    UI -> UI: Show new password form
+    User -> UI: Enter new password
+    UI -> ValidationUtil: Validate password strength
+    ValidationUtil --> UI: Return validation result
+    
+    alt password validation passes
+        UI -> AuthUtil: updatePassword(newPassword)
+        AuthUtil -> Supabase: Set new password
+        Supabase --> AuthUtil: Confirm password update
+        AuthUtil --> UI: Return success
+        UI -> User: Show success message
+    else password validation fails
+        UI -> User: Show password requirements
+    end
+else email validation fails
+    UI -> User: Show email format error
+end
+
+@enduml

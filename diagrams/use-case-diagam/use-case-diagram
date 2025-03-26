@@ -1,0 +1,121 @@
+@startuml SkillMart
+
+' Define actors
+actor "Unauthenticated User" as Unauth
+actor "Authenticated User" as Auth
+actor "Supabase" as Supabase <<system>>
+actor "OpenAI" as OpenAI <<system>>
+
+' Define system boundary
+rectangle "SkillMart Platform" {
+  ' Unauthenticated User use cases
+  usecase "Browse Listings" as BrowseListings
+  usecase "Search Listings" as SearchListings
+  usecase "View Listing Details" as ViewListing
+  usecase "Sign Up" as SignUp
+  usecase "Login" as Login
+  usecase "Password Recovery" as PasswordRecovery
+  usecase "Chat with Chatbot\n(Temporary Session)" as ChatUnauth
+  
+  ' Authenticated User use cases
+  usecase "Manage Profile" as ManageProfile
+  usecase "Create Listing" as CreateListing
+  usecase "Edit Listing" as EditListing
+  usecase "Delete Listing" as DeleteListing
+  usecase "Save Listing" as SaveListing
+  usecase "Unsave Listing" as UnsaveListing
+  usecase "View Saved Listings" as ViewSavedListings
+  usecase "Create Review" as CreateReview
+  usecase "Edit Review" as EditReview
+  usecase "Delete Review" as DeleteReview
+  usecase "Chat with Chatbot\n(Persistent Session)" as ChatAuth
+  usecase "Manage Chat Sessions" as ManageChatSessions
+  
+  ' Group related use cases
+  usecase "Manage Listings" as ManageListings
+  usecase "Manage Saved Listings" as ManageSavedListings
+  usecase "Manage Reviews" as ManageReviews
+  
+  ' External systems use cases
+  usecase "Authenticate User" as AuthenticateUser
+  usecase "Store and Retrieve Data" as StoreData
+  usecase "Process Vector Searches" as VectorSearch
+  usecase "Generate Embeddings" as GenerateEmbeddings
+  usecase "Process Chat Interactions" as ProcessChat
+  usecase "Summarize Reviews" as SummarizeReviews
+}
+
+' Relationships for Unauthenticated User
+Unauth -- BrowseListings
+Unauth -- SearchListings
+Unauth -- ViewListing
+Unauth -- SignUp
+Unauth -- Login
+Unauth -- ChatUnauth
+
+' Relationships for Authenticated User
+Auth -- ManageProfile
+Auth -- ManageListings
+Auth -- ManageSavedListings
+Auth -- ManageReviews
+Auth -- ChatAuth
+Auth -- ManageChatSessions
+
+' Supabase relationships
+Supabase -- AuthenticateUser
+Supabase -- StoreData
+Supabase -- VectorSearch
+
+' OpenAI relationships
+OpenAI -- GenerateEmbeddings
+OpenAI -- ProcessChat
+OpenAI -- SummarizeReviews
+
+' Include relationships
+BrowseListings ..> ViewListing : <<include>>
+SearchListings ..> ViewListing : <<include>>
+ManageListings ..> CreateListing : <<include>>
+ManageListings ..> EditListing : <<include>>
+ManageListings ..> DeleteListing : <<include>>
+ManageSavedListings ..> SaveListing : <<include>>
+ManageSavedListings ..> UnsaveListing : <<include>>
+ManageSavedListings ..> ViewSavedListings : <<include>>
+ManageReviews ..> CreateReview : <<include>>
+ManageReviews ..> EditReview : <<include>>
+ManageReviews ..> DeleteReview : <<include>>
+ChatAuth ..> ProcessChat : <<include>>
+ViewListing ..> SummarizeReviews : <<include>>
+
+' Extend relationships
+PasswordRecovery .> Login : <<extend>>
+ManageChatSessions .> ChatAuth : <<extend>>
+SaveListing .> ViewListing : <<extend>>
+CreateReview .> ViewListing : <<extend>>
+SearchListings .> BrowseListings : <<extend>>
+
+' Association relationships
+AuthenticateUser -- Login
+AuthenticateUser -- SignUp
+AuthenticateUser -- PasswordRecovery
+StoreData -- ManageListings
+StoreData -- ManageSavedListings
+StoreData -- ManageReviews
+VectorSearch -- SearchListings
+GenerateEmbeddings -- VectorSearch
+ProcessChat -- ChatUnauth
+ProcessChat -- ChatAuth
+
+' Notes
+note "Can only edit own listings" as N1
+N1 .. EditListing
+
+note "Can only edit own reviews" as N2
+N2 .. EditReview
+
+note "Cannot review own listings" as N3
+N3 .. CreateReview
+
+note "Authenticated Users inherit\nall Unauthenticated User\ncapabilities" as N4
+N4 .. Auth
+
+@enduml

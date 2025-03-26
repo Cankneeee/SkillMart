@@ -1,0 +1,117 @@
+@startuml
+
+title Profile Management Sequence Diagram (Design Phase)
+autonumber
+
+actor User
+participant UI as "User Interface"
+participant AuthUtil as "Auth Utility"
+participant ValidationUtil as "Validation Utility"
+participant DBUtil as "Database Utility"
+participant StorageUtil as "Storage Utility"
+participant Supabase
+
+' View Profile Flow
+User -> UI: Navigate to profile page
+
+UI -> AuthUtil: getCurrentUser()
+AuthUtil --> UI: Return user data
+
+alt user authenticated
+    UI -> DBUtil: getUserProfile(userId)
+    DBUtil -> Supabase: Query profile data
+    Supabase --> DBUtil: Return profile
+    DBUtil --> UI: Return profile data
+    UI -> User: Display profile information
+else not authenticated
+    UI -> User: Redirect to login page
+end
+
+' Update Username Flow
+User -> UI: Click edit username
+UI -> UI: Show editable field
+User -> UI: Enter new username
+User -> UI: Save changes
+
+UI -> ValidationUtil: validateUsername(username)
+ValidationUtil --> UI: Return validation result
+
+alt validation passes
+    UI -> DBUtil: updateProfile(userId, "username", value)
+    DBUtil -> Supabase: Update profile record
+    Supabase --> DBUtil: Confirm update
+    DBUtil --> UI: Return success
+    UI -> UI: Update displayed username
+    UI -> User: Show success message
+else validation fails
+    UI -> User: Show validation error
+end
+
+' Update Email Flow
+User -> UI: Click edit email
+UI -> UI: Show editable field
+User -> UI: Enter new email
+User -> UI: Save changes
+
+UI -> ValidationUtil: validateEmail(email)
+ValidationUtil --> UI: Return validation result
+
+alt validation passes
+    UI -> DBUtil: updateProfile(userId, "email", value)
+    DBUtil -> Supabase: Update profile record
+    Supabase --> DBUtil: Confirm update
+    DBUtil --> UI: Return success
+    UI -> UI: Update displayed email
+    UI -> User: Show success message
+else validation fails
+    UI -> User: Show validation error
+end
+
+' Update Password Flow
+User -> UI: Click edit password
+UI -> UI: Show password fields
+User -> UI: Enter new password and confirmation
+User -> UI: Save changes
+
+UI -> ValidationUtil: validatePassword(password)
+ValidationUtil --> UI: Return password validation
+
+UI -> ValidationUtil: checkPasswordsMatch(password, confirmation)
+ValidationUtil --> UI: Return matching validation
+
+alt all validations pass
+    UI -> AuthUtil: updatePassword(newPassword)
+    AuthUtil -> Supabase: Change user password
+    Supabase --> AuthUtil: Confirm update
+    AuthUtil --> UI: Return success
+    UI -> User: Show success message
+else validations fail
+    UI -> User: Show specific validation errors
+end
+
+' Update Profile Picture Flow
+User -> UI: Click edit profile picture
+UI -> UI: Show file selector
+User -> UI: Select image file
+
+UI -> ValidationUtil: validateImageFile(file)
+ValidationUtil --> UI: Return validation result
+
+alt validation passes
+    UI -> StorageUtil: uploadProfileImage(userId, file)
+    StorageUtil -> Supabase: Upload to storage
+    Supabase --> StorageUtil: Return image URL
+    StorageUtil --> UI: Return image URL
+    
+    UI -> DBUtil: updateProfile(userId, "profile_picture", imageUrl)
+    DBUtil -> Supabase: Update profile record
+    Supabase --> DBUtil: Confirm update
+    DBUtil --> UI: Return success
+    
+    UI -> UI: Display new profile picture
+    UI -> User: Show success message
+else validation fails
+    UI -> User: Show image validation error
+end
+
+@enduml
