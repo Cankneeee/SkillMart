@@ -1,4 +1,3 @@
-// lib/embeddingService.ts
 import { createClient } from "@/utils/supabase/client";
 import { getOpenAIInstance } from "./openai";
 

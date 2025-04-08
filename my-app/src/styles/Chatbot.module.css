@@ -550,3 +550,14 @@
     width: 350px;
   }
 }
+
+.noSessionsMessage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  color: var(--header-text);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-md);
+  font-style: normal;
+}

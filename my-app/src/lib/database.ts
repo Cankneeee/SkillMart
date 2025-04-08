@@ -489,77 +489,33 @@ export type CreateReviewData = Omit<Review, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateReviewData = Pick<Review, 'rating' | 'comment'>;
 
 /**
- * Fetches reviews for a specific listing
+ * Fetches reviews for a specific listing (WITHOUT joining profiles)
  * @param listingId - The ID of the listing to fetch reviews for
  * @returns Array of reviews for the listing
  */
 export const getListingReviews = async (
   listingId: string
-): Promise<(Review & { user_profile?: any })[]> => {
+): Promise<Review[]> => { // Return only Review type
   try {
-    // First check if the reviews table exists and has data
-    const { count, error: countError } = await supabase
+    // Fetch only from the reviews table
+    const { data, error } = await supabase
       .from('reviews')
-      .select('*', { count: 'exact', head: true })
-      .eq('listing_id', listingId);
-    
-    if (countError) {
-      console.error('Error checking reviews table:', countError);
-      // If there's an error with the table itself, return empty array
-      return [];
+      .select('*') // Select all columns from the reviews table
+      .eq('listing_id', listingId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching reviews:', error);
+      // Optionally, you could throw the error or return an empty array
+      // depending on how you want the caller (api.ts) to handle it.
+      // Throwing is generally better for bubbling up the issue.
+      throw error;
     }
-    
-    // If there are no reviews, return empty array right away
-    if (count === 0) {
-      return [];
-    }
-    
-    // Try a simpler query without the explicit foreign key constraint
-    try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          profiles(id, username, profile_picture)
-        `)
-        .eq('listing_id', listingId)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Transform the result to match the expected structure
-      return (data || []).map(review => {
-        const user_profile = review.profiles;
-        delete review.profiles;
-        return {
-          ...review,
-          user_profile
-        };
-      });
-    } catch (joinError) {
-      console.error('Error joining with profiles:', joinError);
-      
-      // Fallback to just getting reviews without profile info
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('listing_id', listingId)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching reviews without profiles:', error);
-        return [];
-      }
-      
-      // Return reviews without profile info
-      return data || [];
-    }
+
+    return data || []; // Return the review data or an empty array
   } catch (err) {
     console.error('Unexpected error in getListingReviews:', err);
-    // Always return an empty array instead of throwing, to prevent UI breakage
-    return [];
+    throw err; // Re-throw other unexpected errors
   }
 };
 
@@ -608,55 +564,44 @@ export const createReview = async (
   reviewData: CreateReviewData
 ): Promise<Review> => {
   try {
-    // First check if the user has already reviewed this listing
-    const { data: existingReview, error: fetchError } = await supabase
-      .from('reviews')
-      .select('id')
-      .eq('listing_id', reviewData.listing_id)
-      .eq('user_id', reviewData.user_id)
-      .maybeSingle();
-    
-    if (fetchError) {
-      console.error('Error checking for existing review:', fetchError);
-      throw fetchError;
+    // Application-level checks (optional but recommended redundancy)
+    if (!reviewData.user_id) {
+         throw new Error('User ID is required to create a review');
     }
-    
-    if (existingReview) {
-      throw new Error('You have already reviewed this listing');
-    }
-    
-    // Check if the user is trying to review their own listing
-    const { data: listingData, error: listingError } = await supabase
-      .from('listings')
-      .select('user_id')
-      .eq('id', reviewData.listing_id)
-      .single();
-    
-    if (listingError) {
-      console.error('Error fetching listing for review:', listingError);
-      throw listingError;
-    }
-    
-    if (listingData.user_id === reviewData.user_id) {
-      throw new Error('You cannot review your own listing');
-    }
-    
-    // Create the review
-    const { data, error } = await supabase
-      .from('reviews')
-      .insert([reviewData])
-      .select()
-      .single();
-    
+    // You could re-verify the self-review check here if desired,
+    // though the SQL function also does it now.
+
+    const { data, error } = await supabase.rpc('create_user_review', {
+      p_listing_id: reviewData.listing_id,
+      p_user_id: reviewData.user_id,
+      p_rating: reviewData.rating,
+      p_comment: reviewData.comment
+    });
+
     if (error) {
-      console.error('Error creating review:', error);
+      console.error('Error calling create_user_review RPC:', error);
+      // Check if the error is from our explicit RAISE EXCEPTION messages
+      if (error.message.includes('User ID mismatch') ||
+          error.message.includes('Users cannot review their own listings') ||
+          error.message.includes('User has already reviewed this listing')) {
+           throw new Error(error.message);
+      }
+      // Rethrow other errors
       throw error;
     }
-    
-    return data;
+
+    if (!data) {
+        // Handle cases where RPC might return null without an error
+        throw new Error('Failed to create review, no data returned.');
+    }
+
+    // The RPC function returns the created review row directly
+    return data as Review;
+
   } catch (err) {
-    console.error('Unexpected error in createReview:', err);
-    throw err;
+    console.error('Unexpected error in createReview (RPC call):', err);
+    // Ensure the error message passed up is helpful
+    throw err instanceof Error ? err : new Error('An unexpected error occurred during review creation');
   }
 };
 

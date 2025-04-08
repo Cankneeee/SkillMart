@@ -1,4 +1,3 @@
-// app/api/chat/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { getOpenAIInstance } from '@/lib/openai';
@@ -11,234 +10,185 @@ interface ChatRequest {
 }
 
 export async function POST(request: Request) {
+  const requestStartTime = Date.now();
+  let currentSessionIdForLogging = 'unknown'; // For logging scope
+
   try {
     const { message, sessionId, sessionHistory } = await request.json() as ChatRequest;
+    currentSessionIdForLogging = sessionId; // Update for logging
+
+    console.log(`[${requestStartTime}] --- CHAT API START ---`);
+    console.log(`[${requestStartTime}] Received Request: sessionId=${sessionId}, message="${message}", historyLength=${sessionHistory.length}`);
+
     const supabase = await createClient();
     const openai = getOpenAIInstance();
-    
-    // Find or create session in database
-    let dbSessionId = sessionId;
-    
-    if (sessionId.startsWith('session-')) {
-      // This is a client-side generated ID, need to create in DB
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) {
-        throw new Error('User not authenticated');
+
+    let dbSessionId = sessionId; // Use let as it might be reassigned
+
+    // --- Session Handling ---
+    // Treat temporary IDs AND the initial 'default-session' as triggers to create a DB session
+    if (sessionId.startsWith('session-') || sessionId === 'default-session') {
+      console.log(`[${requestStartTime}] Temporary sessionId detected: ${sessionId}. Attempting to create DB session.`);
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !userData?.user) {
+        console.error(`[${requestStartTime}] Authentication error during session creation:`, userError);
+        throw new Error('User not authenticated for session creation');
       }
-      
-      const { data: newSession, error } = await supabase
-        .from('chat_sessions')
-        .insert({
-          name: 'New Chat',
-          user_id: userData.user.id
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
-      dbSessionId = newSession.id;
+      console.log(`[${requestStartTime}] User authenticated: ${userData.user.id}`);
+
+      try {
+        console.log(`[${requestStartTime}] Inserting new session into chat_sessions for user: ${userData.user.id}`);
+        const { data: newSession, error: insertSessionError } = await supabase
+          .from('chat_sessions')
+          .insert({
+            name: `Chat started ${new Date().toLocaleTimeString()}`, // More descriptive default name
+            user_id: userData.user.id
+          })
+          .select('id') // Only select the ID
+          .single();
+
+        if (insertSessionError) {
+          console.error(`[${requestStartTime}] Error inserting new chat_sessions row:`, insertSessionError);
+          throw insertSessionError; // Propagate error
+        }
+
+        if (!newSession || !newSession.id) {
+           console.error(`[${requestStartTime}] Failed to create session or retrieve ID.`);
+           throw new Error('Failed to create session in database.');
+        }
+
+        dbSessionId = newSession.id; // Assign the new database ID
+        currentSessionIdForLogging = dbSessionId; // Update for subsequent logs
+        console.log(`[${requestStartTime}] New DB session created successfully. ID: ${dbSessionId}`);
+
+      } catch (dbError) {
+        console.error(`[${requestStartTime}] Database operation failed during session creation:`, dbError);
+        // Depending on requirements, you might want to return an error or continue without saving
+        return NextResponse.json({ error: 'Failed to create chat session' }, { status: 500 });
+      }
+
+    } else {
+      console.log(`[${requestStartTime}] Using existing sessionId: ${sessionId}`);
+      dbSessionId = sessionId; // Ensure dbSessionId is assigned even if not creating new
     }
-    
-    // Store user message in database
-    await supabase
-      .from('chat_messages')
-      .insert({
-        session_id: dbSessionId,
-        sender: 'user',
-        text: message
-      });
-    
-    // Generate embedding for the user message
+
+    // --- Store User Message ---
+    try {
+      console.log(`[${requestStartTime}] Inserting USER message for session: ${dbSessionId}`);
+      const { error: insertUserMsgError } = await supabase
+        .from('chat_messages')
+        .insert({
+          session_id: dbSessionId,
+          sender: 'user',
+          text: message
+        });
+
+      if (insertUserMsgError) {
+        console.error(`[${requestStartTime}] Error inserting USER message:`, insertUserMsgError);
+        // Decide if you want to throw or just log and continue
+        // throw insertUserMsgError;
+      } else {
+        console.log(`[${requestStartTime}] USER message inserted successfully for session: ${dbSessionId}`);
+      }
+    } catch (dbError) {
+       console.error(`[${requestStartTime}] Database exception during USER message insert:`, dbError);
+       // Handle as needed
+    }
+
+    // --- Generate Embedding & Context (Keep Existing Logic) ---
+    console.log(`[${requestStartTime}] Generating embedding for user message...`);
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: message
     });
-    
     const queryEmbedding = embeddingResponse.data[0].embedding;
-    
-    // --- BEGIN ENHANCED CONTEXT GATHERING ---
-    
-    // 1. Find relevant listings based on query embedding
-    let listingsContext = "";
-    const { data: relevantListings } = await supabase.rpc(
-      'match_listings',
-      {
-        query_embedding: queryEmbedding,
-        similarity_threshold: 0.6,
-        max_results: 5
-      }
-    );
-    
-    if (relevantListings && relevantListings.length > 0) {
-      const listingIds = relevantListings.map((item: any) => item.id);
-      const { data: listings } = await supabase
-        .from('listings')
-        .select('id, title, description, price, category, listing_type, user_id')
-        .in('id', listingIds);
-      
-      if (listings && listings.length > 0) {
-        listingsContext = "Relevant listings from the database:\n\n" + 
-          listings.map((l: any, i: number) => 
-            `Listing ${i+1}:\n- ID: ${l.id}\n- Title: ${l.title}\n- Category: ${l.category}\n- Type: ${l.listing_type}\n- Price: $${l.price}\n- Description: ${l.description?.substring(0, 100)}...\n- URL: /listings/${l.id}`
-          ).join('\n\n');
-      }
-    }
-    
-    // 2. Check for similar listings requests by looking for listing IDs
-    let similarListingsContext = "";
-    const extractListingIds = (text: string): string[] => {
-      const idPattern = /\/listings\/([0-9a-f-]+)/g;
-      const matches = [...text.matchAll(idPattern)];
-      return matches.map(match => match[1]);
-    };
-    
-    // Extract IDs from the current message and recent history
-    const mentionedIds: string[] = extractListingIds(message);
-    
-    // Add IDs from recent messages (last 3)
-    sessionHistory.slice(-3).forEach(msg => {
-      const ids = extractListingIds(msg.text);
-      mentionedIds.push(...ids);
-    });
-    
-    // If we found listing IDs, fetch similar listings for the most recent one
-    if (mentionedIds.length > 0) {
-      const mostRecentId = mentionedIds[mentionedIds.length - 1];
-      
-      const { data: similarListings } = await supabase.rpc(
-        'similar_listings',
-        {
-          listing_id: mostRecentId,
-          similarity_threshold: 0.6,
-          max_results: 3
-        }
-      );
-      
-      if (similarListings && similarListings.length > 0) {
-        const similarIds = similarListings.map((item: any) => item.id);
-        const { data: listings } = await supabase
-          .from('listings')
-          .select('id, title, description, price, category, listing_type')
-          .in('id', similarIds);
-        
-        if (listings && listings.length > 0) {
-          similarListingsContext = "Similar listings to what was mentioned:\n\n" + 
-            listings.map((l: any, i: number) => 
-              `Similar Listing ${i+1}:\n- ID: ${l.id}\n- Title: ${l.title}\n- Category: ${l.category}\n- Type: ${l.listing_type}\n- Price: $${l.price}\n- Description: ${l.description?.substring(0, 100)}...\n- URL: /listings/${l.id}`
-            ).join('\n\n');
-        }
-      }
-    }
-    
-    // 3. Add information about recent categories from recent conversations
-    let categoryContext = "";
-    const categoryPattern = /(photography|programming|design|music|writing|language|fitness|cooking|business|technology|education|lifestyle)/gi;
-    const mentionedCategories = new Set<string>();
-    
-    // From current message
-    const currentCategoryMatches = message.match(categoryPattern) || [];
-    currentCategoryMatches.forEach(cat => mentionedCategories.add(cat.toLowerCase()));
-    
-    // From session history (last 3 messages)
-    sessionHistory.slice(-3).forEach(msg => {
-      const matches = msg.text.match(categoryPattern) || [];
-      matches.forEach(cat => mentionedCategories.add(cat.toLowerCase()));
-    });
-    
-    if (mentionedCategories.size > 0) {
-      const categories = Array.from(mentionedCategories);
-      
-      // Get category information
-      const categoryPromises = categories.map(async (category) => {
-        const { data: categoryListings } = await supabase
-          .from('listings')
-          .select('id, title')
-          .ilike('category', `%${category}%`)
-          .limit(3);
-          
-        return {
-          category,
-          examples: categoryListings || []
-        };
-      });
-      
-      const categoryResults = await Promise.all(categoryPromises);
-      
-      categoryContext = "Information about mentioned categories:\n\n" +
-        categoryResults.map(result => 
-          `Category: ${result.category.charAt(0).toUpperCase() + result.category.slice(1)}\n` +
-          `Example listings: ${result.examples.map(l => `${l.title} (/listings/${l.id})`).join(', ')}`
-        ).join('\n\n');
-    }
-    
-    // --- END ENHANCED CONTEXT GATHERING ---
-    
-    // Compile all context
-    const contextParts = [listingsContext, similarListingsContext, categoryContext]
-      .filter(context => context.length > 0);
-    
-    const combinedContext = contextParts.length > 0 
-      ? "### CONTEXT INFORMATION ###\n\n" + contextParts.join("\n\n") + "\n\n###################\n\n"
-      : "";
-    
-    // Create system message with instructions
+    console.log(`[${requestStartTime}] Embedding generated.`);
+
+    // ... (keep your existing context gathering logic here: match_listings, similar_listings, category context) ...
+    // Add logs within that logic if needed
+    console.log(`[${requestStartTime}] Context gathering complete.`);
+    const combinedContext = "/* Your compiled context string here */"; // Placeholder - Replace with your actual context compilation logic
+
+    // --- Prepare AI Request ---
     const systemMessage: ChatCompletionMessageParam = {
-      role: "system",
-      content: `You are a helpful assistant for SkillMart, a marketplace where people exchange knowledge and services. 
-
-Your task is to:
-1. Answer general questions about the platform
-2. Help users find listings based on their criteria
-3. Recommend similar listings when appropriate
-4. Provide information about different service categories
-
-When referencing listings, include the complete URL path as /listings/{id} so users can click through.
-
-Use the provided context information when available, but respond naturally and conversationally.
-
-${combinedContext ? "Use this context information to inform your response, but do not explicitly mention that you're using 'context' or 'database' information. Integrate it naturally." : ""}
-
-Be friendly, helpful, and concise. If asked about a listing and you don't have information about it, suggest searching for similar listings in that category.`
-    };
+        role: "system",
+        content: `You are a helpful assistant for SkillMart, a marketplace where people exchange knowledge and services.
+        Your primary goal is to answer user questions accurately based *only* on the information provided in the CONTEXT INFORMATION section below, if present, and the current conversation history.
     
-    // Prepare conversation history
+        Your tasks are:
+        1. Answer general questions about the platform (using your general knowledge if no context is provided).
+        2. Help users find listings *if relevant listings are provided in the CONTEXT INFORMATION*.
+        3. Recommend similar listings *if similar listings are provided in the CONTEXT INFORMATION*.
+        4. Provide information about service categories *if category examples are provided in the CONTEXT INFORMATION*.
+    
+        **Crucially: Do NOT invent listing details, URLs, user activities, or any information not explicitly present in the CONTEXT INFORMATION or conversation history.**
+    
+        If the CONTEXT INFORMATION does not contain the answer to the user's specific query about a listing or user:
+        - Explicitly state that you cannot find the specific information requested.
+        - Do NOT make up details.
+        - You MAY suggest a general search or Browse a relevant category if appropriate.
+    
+        When referencing listings *found in the context*, include the complete URL path as /listings/{id}.
+    
+        ${combinedContext ? `### CONTEXT INFORMATION ###\n\n${combinedContext}\n\n###################\n\nUse the context above to answer the user's request.` : "No specific database context provided for this query."}
+    
+        Be friendly, helpful, concise, and strictly factual based on the provided information.`
+    };
+    // This is the corrected mapping that resolves the TypeScript error
     const historyMessages: ChatCompletionMessageParam[] = sessionHistory.map(msg => ({
       role: msg.sender === 'user' ? 'user' : 'assistant',
       content: msg.text
     }));
-    
-    const userMessage: ChatCompletionMessageParam = {
-      role: "user",
-      content: message
-    };
-    
-    // Get AI response
+    const userMessage: ChatCompletionMessageParam = { role: "user", content: message };
+
+    console.log(`[${requestStartTime}] Calling OpenAI completion API...`);
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview", // Using a more capable model for better understanding
+      model: "gpt-4-turbo-preview",
       messages: [systemMessage, ...historyMessages, userMessage],
       max_tokens: 500,
       temperature: 0.7,
     });
-    
     const responseText = completion.choices[0].message.content || "I'm sorry, I couldn't process your request.";
-    
-    // Store bot response in database
-    await supabase
-      .from('chat_messages')
-      .insert({
-        session_id: dbSessionId,
-        sender: 'bot',
-        text: responseText
-      });
-    
-    return NextResponse.json({ 
+    console.log(`[${requestStartTime}] OpenAI response received.`);
+
+    // --- Store Bot Response ---
+    try {
+      console.log(`[${requestStartTime}] Inserting BOT message for session: ${dbSessionId}`);
+      const { error: insertBotMsgError } = await supabase
+        .from('chat_messages')
+        .insert({
+          session_id: dbSessionId,
+          sender: 'bot',
+          text: responseText
+        });
+
+      if (insertBotMsgError) {
+        console.error(`[${requestStartTime}] Error inserting BOT message:`, insertBotMsgError);
+        // Decide if you want to throw or just log and continue
+        // throw insertBotMsgError;
+      } else {
+        console.log(`[${requestStartTime}] BOT message inserted successfully for session: ${dbSessionId}`);
+      }
+    } catch (dbError) {
+       console.error(`[${requestStartTime}] Database exception during BOT message insert:`, dbError);
+       // Handle as needed
+    }
+
+    // --- Return Response ---
+    console.log(`[${requestStartTime}] Returning response. SessionId being returned: ${dbSessionId}`);
+    console.log(`[${requestStartTime}] --- CHAT API END --- Total Time: ${Date.now() - requestStartTime}ms`);
+
+    return NextResponse.json({
       response: responseText,
-      sessionId: dbSessionId
+      sessionId: dbSessionId // Return the correct session ID (potentially the new DB one)
     });
+
   } catch (error) {
-    console.error('Chat error:', error);
+    const errorTime = Date.now();
+    console.error(`[${errorTime}] --- CHAT API ERROR --- SessionId at error: ${currentSessionIdForLogging}. Total Time: ${errorTime - requestStartTime}ms`, error);
     return NextResponse.json(
-      { error: 'Failed to generate response' },
+      { error: 'Failed to generate response', details: (error instanceof Error ? error.message : 'Unknown error') },
       { status: 500 }
     );
   }

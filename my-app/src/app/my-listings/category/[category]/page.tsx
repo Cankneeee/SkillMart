@@ -1,4 +1,3 @@
-// File: /app/my-listings/category/[category]/page.tsx
 import MyCategoryListings from '@/components/MyCategoryListings';
 import type { Metadata } from 'next';
 import { createClient } from '@/utils/supabase/server';

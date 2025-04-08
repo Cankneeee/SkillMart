@@ -1,4 +1,3 @@
-// utils/apiUtils.ts
 import { createClient } from '@/utils/supabase/client';
 
 /**

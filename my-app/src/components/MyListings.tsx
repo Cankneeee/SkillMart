@@ -231,9 +231,6 @@ export default function MyListings() {
           {filteredListings.length === 0 && !isLoading && (
             <div className={styles.emptyState}>
               <p>No listings found for the selected filter.</p>
-              <Link href="/create-listing">
-                <Button variant="primary">Create Your First Listing</Button>
-              </Link>
             </div>
           )}
         </Container>

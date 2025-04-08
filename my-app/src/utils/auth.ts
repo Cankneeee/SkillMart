@@ -1,4 +1,3 @@
-// utils/auth.ts
 import { createClient } from '@/utils/supabase/client';
 
 interface Router {

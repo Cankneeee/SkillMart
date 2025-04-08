@@ -52,8 +52,3 @@ export default function Error({
     </div>
   );
 }
-
-// Add this to your CSS or as a <style> tag
-// .hover-button:hover {
-//   background-color: var(--hover-button) !important;
-// }

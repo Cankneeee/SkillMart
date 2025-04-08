@@ -1,4 +1,3 @@
-// Chatbot.tsx
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -40,6 +39,7 @@ const Chatbot: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [noSessions, setNoSessions] = useState<boolean>(false);
 
   // Get current session
   const currentSession = sessions.find(session => session.id === currentSessionId) || sessions[0] || null;
@@ -83,6 +83,7 @@ const Chatbot: React.FC = () => {
           if (sessionsWithMessages.length > 0) {
             setSessions(sessionsWithMessages);
             setCurrentSessionId(sessionsWithMessages[0].id);
+            setNoSessions(false);
           }
         }
       } catch (error) {
@@ -175,6 +176,12 @@ const Chatbot: React.FC = () => {
     e.preventDefault();
     if (inputValue.trim() === '') return;
     
+    // Create a new session if there are no sessions
+    if (noSessions) {
+      createNewSession();
+      setNoSessions(false);
+    }
+    
     const newUserMessage: ChatMessage = { text: inputValue, sender: 'user' };
     
     // Update the current session with the new message
@@ -210,45 +217,65 @@ const Chatbot: React.FC = () => {
     setCurrentSessionId(tempId);
     setNewSessionName('');
     setShowSessionManager(false);
+    setNoSessions(false);
     
     // The session will be created in the database when first message is sent
   };
 
   const deleteSession = async (sessionId: string): Promise<void> => {
-    // If it's a database session (not a local temp one)
-    if (!sessionId.startsWith('session-')) {
-      try {
+    try {
+      // Only attempt DB delete if it's a real DB session (UUID)
+      // Exclude temporary client-side IDs ('session-...') and the initial placeholder ('default-session')
+      if (!sessionId.startsWith('session-') && sessionId !== 'default-session') {
         const { error } = await supabase
           .from('chat_sessions')
           .delete()
-          .eq('id', sessionId);
-          
+          .eq('id', sessionId); // This now only runs for valid UUIDs
+        
         if (error) throw error;
-      } catch (err) {
-        console.error('Error deleting chat session:', err);
-        // Continue with UI update even if DB delete fails
+        console.log(`Successfully deleted session ${sessionId} from database.`);
+      } else {
+        console.log(`Skipping database deletion for local/default session: ${sessionId}`);
       }
+
+      // Remove the session from the local state regardless of DB operation success/failure
+      const remainingSessions = sessions.filter(session => session.id !== sessionId);
+      
+      // If this was the last session, set noSessions to true
+      if (remainingSessions.length === 0) {
+        setSessions([]);
+        setNoSessions(true);
+        setCurrentSessionId('');
+      } else {
+        setSessions(remainingSessions);
+        // If we deleted the current session, switch to the first one
+        if (sessionId === currentSessionId) {
+          setCurrentSessionId(remainingSessions[0].id);
+        }
+      }
+      
+      setShowDeleteConfirm(false);
+      setSessionToDelete(null);
+    } catch (error) {
+      console.error(`Error deleting chat session ${sessionId}:`, error);
+      
+      // Still update the UI even if there's a database error
+      const remainingSessions = sessions.filter(session => session.id !== sessionId);
+      
+      if (remainingSessions.length === 0) {
+        setSessions([]);
+        setNoSessions(true);
+        setCurrentSessionId('');
+      } else {
+        setSessions(remainingSessions);
+        if (sessionId === currentSessionId) {
+          setCurrentSessionId(remainingSessions[0].id);
+        }
+      }
+      
+      setShowDeleteConfirm(false);
+      setSessionToDelete(null);
     }
-    
-    setSessions(prevSessions => prevSessions.filter(session => session.id !== sessionId));
-    
-    // If we deleted the current session or there are no sessions left
-    const remainingSessions = sessions.filter(session => session.id !== sessionId);
-    if (remainingSessions.length > 0 && sessionId === currentSessionId) {
-      setCurrentSessionId(remainingSessions[0].id);
-    } else if (remainingSessions.length === 0) {
-      // Create a new default session if we deleted the last one
-      const defaultSession: ChatSession = {
-        id: 'default-session',
-        name: 'New Chat',
-        messages: [{ text: "Hi there! I'm your SkillMart assistant. How can I help you today?", sender: 'bot' }]
-      };
-      setSessions([defaultSession]);
-      setCurrentSessionId('default-session');
-    }
-    
-    setShowDeleteConfirm(false);
-    setSessionToDelete(null);
   };
 
   const confirmDeleteSession = (sessionId: string): void => {
@@ -285,7 +312,7 @@ const Chatbot: React.FC = () => {
     );
     
     // Update database if it's a permanent session
-    if (!sessionId.startsWith('session-')) {
+    if (!sessionId.startsWith('session-') && sessionId !== 'default-session') {
       try {
         const { error } = await supabase
           .from('chat_sessions')
@@ -341,7 +368,7 @@ const Chatbot: React.FC = () => {
                     aria-label="Manage sessions"
                   >
                     <List size={16} className="me-2" />
-                    <span className={styles.chatTitle}>{currentSession?.name || "New Chat"}</span>
+                    <span className={styles.chatTitle}>{currentSession?.name || "Chat Sessions"}</span>
                   </Button>
                 </>
               )}
@@ -371,77 +398,83 @@ const Chatbot: React.FC = () => {
               <h4 className={styles.sessionManagerTitle}>Chat Sessions</h4>
               
               <div className={styles.sessionsContainer}>
-                {sessions.map(session => (
-                  <div key={session.id} className={styles.sessionItem}>
-                    {editSessionId === session.id ? (
-                      <div className={styles.editSessionForm}>
-                        <Form.Control
-                          type="text"
-                          value={editSessionName}
-                          onChange={(e) => setEditSessionName(e.target.value)}
-                          className={styles.editSessionInput}
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveSessionName(session.id);
-                            if (e.key === 'Escape') cancelEditingSession();
-                          }}
-                        />
-                        <div className={styles.editSessionActions}>
-                          <Button 
-                            variant="success" 
-                            size="sm"
-                            className={styles.saveSessionButton}
-                            onClick={() => saveSessionName(session.id)}
-                          >
-                            Save
-                          </Button>
-                          <Button 
-                            variant="secondary" 
-                            size="sm"
-                            className={styles.cancelEditButton}
-                            onClick={cancelEditingSession}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={styles.sessionButtonContainer}>
-                        <Button 
-                          variant={session.id === currentSessionId ? "primary" : "light"}
-                          className={`${styles.sessionSelectButton} ${session.id === currentSessionId ? styles.activeSession : ''}`}
-                          onClick={() => switchSession(session.id)}
-                        >
-                          {session.name}
-                        </Button>
-                        <div className={styles.sessionHoverControls}>
-                          <Button
-                            variant="link"
-                            className={styles.editSessionIcon}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditingSession(session.id, session.name);
+                {sessions.length > 0 ? (
+                  sessions.map(session => (
+                    <div key={session.id} className={styles.sessionItem}>
+                      {editSessionId === session.id ? (
+                        <div className={styles.editSessionForm}>
+                          <Form.Control
+                            type="text"
+                            value={editSessionName}
+                            onChange={(e) => setEditSessionName(e.target.value)}
+                            className={styles.editSessionInput}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveSessionName(session.id);
+                              if (e.key === 'Escape') cancelEditingSession();
                             }}
-                            aria-label="Edit session name"
-                          >
-                            <PencilFill size={14} />
-                          </Button>
-                          <Button
-                            variant="link"
-                            className={styles.deleteSessionIcon}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              confirmDeleteSession(session.id);
-                            }}
-                            aria-label="Delete session"
-                          >
-                            <Trash size={14} />
-                          </Button>
+                          />
+                          <div className={styles.editSessionActions}>
+                            <Button 
+                              variant="success" 
+                              size="sm"
+                              className={styles.saveSessionButton}
+                              onClick={() => saveSessionName(session.id)}
+                            >
+                              Save
+                            </Button>
+                            <Button 
+                              variant="secondary" 
+                              size="sm"
+                              className={styles.cancelEditButton}
+                              onClick={cancelEditingSession}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className={styles.sessionButtonContainer}>
+                          <Button 
+                            variant={session.id === currentSessionId ? "primary" : "light"}
+                            className={`${styles.sessionSelectButton} ${session.id === currentSessionId ? styles.activeSession : ''}`}
+                            onClick={() => switchSession(session.id)}
+                          >
+                            {session.name}
+                          </Button>
+                          <div className={styles.sessionHoverControls}>
+                            <Button
+                              variant="link"
+                              className={styles.editSessionIcon}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditingSession(session.id, session.name);
+                              }}
+                              aria-label="Edit session name"
+                            >
+                              <PencilFill size={14} />
+                            </Button>
+                            <Button
+                              variant="link"
+                              className={styles.deleteSessionIcon}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                confirmDeleteSession(session.id);
+                              }}
+                              aria-label="Delete session"
+                            >
+                              <Trash size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.noSessionsMessage}>
+                    No chat sessions available
                   </div>
-                ))}
+                )}
               </div>
               
               <div className={styles.newSessionForm}>
@@ -466,30 +499,47 @@ const Chatbot: React.FC = () => {
             </div>
           ) : (
             <>
-              <div className={styles.messagesContainer}>
-                {currentSession?.messages.map((message, index) => (
-                  <div 
-                    key={index} 
-                    className={`${styles.messageWrapper} ${message.sender === 'user' ? styles.userMessageWrapper : styles.botMessageWrapper}`}
-                  >
-                    <div 
-                      className={`${styles.messageBubble} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}
-                      dangerouslySetInnerHTML={{ __html: message.text.replace(/\/listings\/([0-9a-f-]+)/g, '<a href="/listings/$1" target="_blank">/listings/$1</a>') }}
-                    />
+              {noSessions ? (
+                <div className={styles.noActiveSessionContainer}>
+                  <div className={styles.noActiveSessionMessage}>
+                    <h4>No Active Chat Sessions</h4>
+                    <p>Start a new conversation by creating a chat session</p>
+                    <Button 
+                      onClick={createNewSession}
+                      className={styles.createFirstSessionButton}
+                    >
+                      Create New Chat
+                    </Button>
                   </div>
-                ))}
-                
-                {isTyping && (
-                  <div className={styles.botMessageWrapper}>
-                    <div className={styles.typingIndicator}>
-                      <Spinner animation="grow" size="sm" className={styles.typingDot} />
-                      <Spinner animation="grow" size="sm" className={styles.typingDot} style={{ animationDelay: '0.2s' }} />
-                      <Spinner animation="grow" size="sm" className={styles.typingDot} style={{ animationDelay: '0.4s' }} />
-                    </div>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.messagesContainer}>
+                    {currentSession?.messages.map((message, index) => (
+                      <div 
+                        key={index} 
+                        className={`${styles.messageWrapper} ${message.sender === 'user' ? styles.userMessageWrapper : styles.botMessageWrapper}`}
+                      >
+                        <div 
+                          className={`${styles.messageBubble} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}
+                          dangerouslySetInnerHTML={{ __html: message.text.replace(/\/listings\/([0-9a-f-]+)/g, '<a href="/listings/$1" target="_blank">/listings/$1</a>') }}
+                        />
+                      </div>
+                    ))}
+                    
+                    {isTyping && (
+                      <div className={styles.botMessageWrapper}>
+                        <div className={styles.typingIndicator}>
+                          <Spinner animation="grow" size="sm" className={styles.typingDot} />
+                          <Spinner animation="grow" size="sm" className={styles.typingDot} style={{ animationDelay: '0.2s' }} />
+                          <Spinner animation="grow" size="sm" className={styles.typingDot} style={{ animationDelay: '0.4s' }} />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                </>
+              )}
               
               <Card.Footer className={styles.inputContainer}>
                 <Form onSubmit={handleSendMessage} className={styles.inputForm}>
@@ -498,7 +548,7 @@ const Chatbot: React.FC = () => {
                       type="text"
                       value={inputValue}
                       onChange={handleInputChange}
-                      placeholder="Type your message here..."
+                      placeholder={noSessions ? "Type to create a new chat..." : "Type your message here..."}
                       aria-label="Type your message"
                       className={styles.inputField}
                     />

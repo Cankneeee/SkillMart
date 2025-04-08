@@ -4,8 +4,6 @@ import Link from "next/link";
 import ImageSkeleton from "./ImageSkeleton";
 import { FaUser, FaStar, FaRegStar } from "react-icons/fa";
 import styles from "@/styles/ListingCard.module.css";
-
-// Import constants only
 import { DEFAULT_LISTING_IMAGE, DEFAULT_PROFILE_IMAGE } from "@/utils/imageUtils";
 
 interface ListingCardProps {

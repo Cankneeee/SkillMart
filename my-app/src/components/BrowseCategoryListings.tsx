@@ -90,6 +90,8 @@ export default function BrowseCategoryListings() {
     // State for filters and search
     const [selectedListingType, setSelectedListingType] = useState("All Types");
     const [searchQuery, setSearchQuery] = useState("");
+    // New state for applied search query
+    const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
     
     // State for listings
     const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
@@ -146,11 +148,11 @@ export default function BrowseCategoryListings() {
         
         console.log(`Found ${fetchedListings.length} listings for category ${categoryName}`);
         
-        // Apply search filter if needed
-        const searchFiltered = searchQuery 
+        // Apply search filter if needed - using appliedSearchQuery instead of searchQuery
+        const searchFiltered = appliedSearchQuery 
           ? fetchedListings.filter(listing => 
-              listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              listing.description.toLowerCase().includes(searchQuery.toLowerCase())
+              listing.title.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
+              listing.description.toLowerCase().includes(appliedSearchQuery.toLowerCase())
             )
           : fetchedListings;
         
@@ -212,7 +214,7 @@ export default function BrowseCategoryListings() {
       } finally {
         setIsLoading(false);
       }
-    }, [selectedListingType, searchQuery, categoryName, itemsPerPage]);
+    }, [selectedListingType, appliedSearchQuery, categoryName, itemsPerPage]);
     
     // Initial fetch on component mount and when filters change
     useEffect(() => {
@@ -231,17 +233,20 @@ export default function BrowseCategoryListings() {
     // Handle search input
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
+      // No longer immediately updating appliedSearchQuery
     };
   
     // Handle search form submission
     const handleSearchSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      // Already filters on input change, but this prevents form submission
+      // Only apply the search when form is submitted
+      setAppliedSearchQuery(searchQuery);
     };
   
     // Clear search query
     const handleClearSearch = () => {
       setSearchQuery("");
+      setAppliedSearchQuery(""); // Also clear the applied search
     };
   
     // Reset listing type filter
@@ -405,13 +410,13 @@ export default function BrowseCategoryListings() {
           ) : (
             <div className={styles.emptyState}>
               <p>No listings found in this category for the selected criteria.</p>
-              {(searchQuery || selectedListingType !== "All Types") && (
+              {(appliedSearchQuery || selectedListingType !== "All Types") && (
                 <p className={styles.emptyStateSubtext}>
                   Try adjusting your filters or search terms.
                 </p>
               )}
               <div className={styles.emptyStateActions}>
-                {searchQuery && (
+                {appliedSearchQuery && (
                   <Button 
                     variant="outline-secondary" 
                     className={styles.clearSearchButton}

@@ -1,4 +1,3 @@
-// lib/openai.ts
 import { OpenAI } from 'openai';
 
 let openaiInstance: OpenAI | null = null;
