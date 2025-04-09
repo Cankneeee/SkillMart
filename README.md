@@ -23,7 +23,7 @@ All project documentation can be found in the respective directories:
   - Design stage documentation
   - Sequence diagrams
 
-- **Database**: `/schema.sql`
+- **Database**: `/my-app/schema/schema.sql`
   - Complete database schema for Supabase setup
 
 ## 🚀 Getting Started
