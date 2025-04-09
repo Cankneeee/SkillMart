@@ -1,3 +1,4 @@
+// src/components/MyCategoryListings.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,13 +10,15 @@ import Link from "next/link";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import styles from "@/styles/MyCategoryListings.module.css";
 import { createClient } from "@/utils/supabase/client";
-import { 
-  getUserListings, 
+import {
+  getUserListings,
   getListingTypes,
   getCategories,
   getCategoryMapping,
   decodeCategoryFromSlug,
-  Listing
+  Listing,
+  getUserProfile, // Import getUserProfile
+  getListingRating // Import getListingRating
 } from "@/lib/database";
 
 // Lazy load the ListingCard component
@@ -29,65 +32,55 @@ export default function MyCategoryListings() {
     const router = useRouter();
     const pathname = usePathname();
     const encodedCategory = params.category as string;
-    
-    // Implement a more robust category decoding method (same as in working browse/category page)
+
+    // Implement a more robust category decoding method
     const getCategoryNameFromSlug = (slug: string): string | null => {
-      // Method 1: Try direct mapping first
       const categoryMapping = getCategoryMapping();
-      if (categoryMapping[slug]) {
-        return categoryMapping[slug];
-      }
-      
-      // Method 2: Try case-insensitive lookup
+      if (categoryMapping[slug]) return categoryMapping[slug];
       const lowerSlug = slug.toLowerCase();
       const lowerCaseMapping: Record<string, string> = {};
       Object.entries(categoryMapping).forEach(([key, value]) => {
         lowerCaseMapping[key.toLowerCase()] = value;
       });
-      
-      if (lowerCaseMapping[lowerSlug]) {
-        return lowerCaseMapping[lowerSlug];
-      }
-      
-      // Method 3: Try manual encoding of all categories to find a match
+      if (lowerCaseMapping[lowerSlug]) return lowerCaseMapping[lowerSlug];
       const allCategories = getCategories();
-      
       for (const category of allCategories) {
         const encoded = category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '-');
-        if (encoded === slug || encoded === lowerSlug) {
-          return category;
-        }
+        if (encoded === slug || encoded === lowerSlug) return category;
       }
-      
       return null;
     };
-    
-    // Use our robust method to find the category name
+
     const categoryName = getCategoryNameFromSlug(encodedCategory);
-    
+
     const [userId, setUserId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedListingType, setSelectedListingType] = useState("All Types");
     const [listings, setListings] = useState<Listing[]>([]);
     const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
-    
+    const [listingMetadata, setListingMetadata] = useState<Record<string, {
+        authorName: string,
+        authorProfilePic?: string,
+        rating: number,
+        reviewCount: number
+    }>>({}); // State for metadata
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(8);
     const [totalPages, setTotalPages] = useState(1);
-    
+
     // Get listing types from database utility
     const listingTypeOptions = getListingTypes();
-    
+
     // Redirect if category doesn't exist
     useEffect(() => {
-      // Only redirect if we have an encoded category but couldn't decode it
       if (!categoryName && encodedCategory) {
         router.push('/my-listings');
       }
     }, [categoryName, encodedCategory, router]);
-    
+
     // If no category name (and we're not yet redirecting), show a loading state
     if (!categoryName) {
       return (
@@ -98,36 +91,67 @@ export default function MyCategoryListings() {
         </div>
       );
     }
-    
+
     // Fetch user session and listings
     const fetchUserAndListings = useCallback(async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
-        // Get the current user session
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          // Redirect to login if no session
+
+        // *** UPDATED CODE: Use getUser() instead of getSession() ***
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          // Redirect to login if no authenticated user
           window.location.href = '/login';
           return;
         }
-        
-        setUserId(session.user.id);
-        
+
+        setUserId(user.id);
+
         // Fetch user's listings for this category
         const userListings = await getUserListings(
-          session.user.id,
-          selectedListingType !== "All Types" ? selectedListingType : undefined,
+          user.id,
+          undefined, // Fetch all types initially
           categoryName
         );
-        
-        setListings(userListings);
-        setFilteredListings(userListings);
-        setTotalPages(Math.max(1, Math.ceil(userListings.length / itemsPerPage)));
-        setCurrentPage(1); // Reset to first page when listings change
-        
+
+        setListings(userListings); // Store all fetched listings
+
+        // Fetch metadata for each listing
+        const metadataPromises = userListings.map(async (listing) => {
+          try {
+            const [ownerProfile, ratingData] = await Promise.all([
+              getUserProfile(listing.user_id), // Fetch profile
+              getListingRating(listing.id)     // Fetch rating
+            ]);
+            return {
+              listingId: listing.id,
+              authorName: ownerProfile?.username || "Unknown User",
+              authorProfilePic: ownerProfile?.profile_picture,
+              rating: ratingData.average,
+              reviewCount: ratingData.count
+            };
+          } catch (err) {
+            console.error(`Error fetching metadata for listing ${listing.id}:`, err);
+            return { // Default metadata on error
+              listingId: listing.id, authorName: "N/A", rating: 0, reviewCount: 0
+            };
+          }
+        });
+
+        const metadataResults = await Promise.all(metadataPromises);
+        const metadataMap = metadataResults.reduce((acc, meta) => {
+          acc[meta.listingId] = meta;
+          return acc;
+        }, {} as Record<string, any>);
+        setListingMetadata(metadataMap);
+
+        // Apply initial filter (if any) - done in useEffect below
+        // setFilteredListings(userListings);
+        // setTotalPages(Math.max(1, Math.ceil(userListings.length / itemsPerPage)));
+        // setCurrentPage(1);
+
       } catch (err: any) {
         console.error("Error fetching user or listings:", err);
         setError(err.message || "Failed to load listings");
@@ -136,54 +160,57 @@ export default function MyCategoryListings() {
       } finally {
         setIsLoading(false);
       }
-    }, [supabase, categoryName, selectedListingType, itemsPerPage]);
-    
+    // Add categoryName and itemsPerPage as dependencies
+    }, [supabase, categoryName, itemsPerPage]);
+
+
     // Initial fetch on component mount
     useEffect(() => {
       if (categoryName) {
         fetchUserAndListings();
       }
-    }, [fetchUserAndListings, categoryName]);
-    
-    // Filter listings when the selected type changes
+    // fetchUserAndListings has dependencies, include it here
+    }, [categoryName, fetchUserAndListings]);
+
+    // Filter listings when the selected type or base listings change
     useEffect(() => {
-      if (!listings || listings.length === 0) return;
-      
-      const filtered = selectedListingType === "All Types" 
-        ? listings 
+      if (!listings) return; // Guard against null/undefined listings
+
+      const filtered = selectedListingType === "All Types"
+        ? listings
         : listings.filter(listing => listing.listing_type === selectedListingType);
-      
+
       setFilteredListings(filtered);
       setTotalPages(Math.max(1, Math.ceil(filtered.length / itemsPerPage)));
       setCurrentPage(1); // Reset to first page on filter change
     }, [selectedListingType, listings, itemsPerPage]);
-    
+
     // Handler for dropdown selection
     const handleListingTypeSelect = (eventKey: string | null) => {
       if (eventKey) {
         setSelectedListingType(eventKey);
       }
     };
-  
+
     // Pagination handlers
     const handlePageChange = (pageNumber: number) => {
       setCurrentPage(pageNumber);
     };
-  
+
     // Get current listings based on pagination
     const getCurrentListings = () => {
       const indexOfLastItem = currentPage * itemsPerPage;
       const indexOfFirstItem = indexOfLastItem - itemsPerPage;
       return filteredListings.slice(indexOfFirstItem, indexOfLastItem);
     };
-  
+
     // Create pagination items
     const renderPaginationItems = () => {
       let items = [];
       for (let number = 1; number <= totalPages; number++) {
         items.push(
-          <Pagination.Item 
-            key={number} 
+          <Pagination.Item
+            key={number}
             active={number === currentPage}
             onClick={() => handlePageChange(number)}
           >
@@ -193,18 +220,26 @@ export default function MyCategoryListings() {
       }
       return items;
     };
-    
+
     // Show loading state
     if (isLoading) {
       return (
         <div className={styles.pageContainer}>
           <Container>
             <p className="text-center my-5">Loading your listings...</p>
+            {/* Optionally show skeletons */}
+            <Row>
+                {Array.from({ length: 4 }).map((_, index) => (
+                    <Col key={index} xs={12} sm={6} md={4} lg={3} className="mb-4">
+                        <ListingCardSkeleton />
+                    </Col>
+                ))}
+            </Row>
           </Container>
         </div>
       );
     }
-  
+
     // Show error state
     if (error) {
       return (
@@ -212,7 +247,7 @@ export default function MyCategoryListings() {
           <Container>
             <div className="text-center my-5">
               <p className="text-danger">{error}</p>
-              <Button variant="primary" onClick={() => fetchUserAndListings()}>
+              <Button variant="primary" onClick={fetchUserAndListings}>
                 Try Again
               </Button>
             </div>
@@ -220,10 +255,10 @@ export default function MyCategoryListings() {
         </div>
       );
     }
-  
+
     // Get current page of listings
     const currentListings = getCurrentListings();
-  
+
     return (
       <div className={styles.pageContainer}>
         <Container>
@@ -238,7 +273,7 @@ export default function MyCategoryListings() {
                 ({filteredListings.length} listing{filteredListings.length !== 1 ? 's' : ''})
               </span>
             </div>
-            
+
             <div className={styles.headerActions}>
               <div className={styles.filterContainer}>
                 <span className={styles.filterLabel}>Filter by:</span>
@@ -248,8 +283,8 @@ export default function MyCategoryListings() {
                   </Dropdown.Toggle>
                   <Dropdown.Menu className={styles.dropdownMenu}>
                     {listingTypeOptions.map((type) => (
-                      <Dropdown.Item 
-                        key={type} 
+                      <Dropdown.Item
+                        key={type}
                         eventKey={type}
                         active={selectedListingType === type}
                         className={styles.dropdownItem}
@@ -260,7 +295,7 @@ export default function MyCategoryListings() {
                   </Dropdown.Menu>
                 </Dropdown>
               </div>
-              
+
               <Link href="/create-listing" className={styles.createButton}>
                 <Button variant="primary" className={styles.createButtonInner}>
                   <FaPlus className={styles.createIcon} />
@@ -269,28 +304,37 @@ export default function MyCategoryListings() {
               </Link>
             </div>
           </div>
-          
+
           {filteredListings.length > 0 ? (
             <>
               <Row>
-                {currentListings.map((listing) => (
-                  <Col key={listing.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
-                    <ListingCard 
-                      id={listing.id}
-                      title={listing.title}
-                      image={listing.image_url || "/listing-default-photo.png"}
-                      listingType={listing.listing_type}
-                      category={listing.category}
-                      user_id={listing.user_id}
-                      // We'll fetch these on-demand in the ListingCard component
-                      authorName=""
-                      rating={0}
-                      reviewCount={0}
-                    />
-                  </Col>
-                ))}
+                {currentListings.map((listing) => {
+                  // Retrieve metadata for this listing
+                  const metadata = listingMetadata[listing.id] || {
+                    authorName: "Loading...", // Default while loading or if error
+                    rating: 0,
+                    reviewCount: 0
+                  };
+                  return (
+                    <Col key={listing.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
+                      <ListingCard
+                        id={listing.id}
+                        title={listing.title}
+                        image={listing.image_url || "/listing-default-photo.png"}
+                        listingType={listing.listing_type}
+                        category={listing.category}
+                        user_id={listing.user_id}
+                        // Pass fetched metadata
+                        authorName={metadata.authorName}
+                        authorProfilePic={metadata.authorProfilePic}
+                        rating={metadata.rating}
+                        reviewCount={metadata.reviewCount}
+                      />
+                    </Col>
+                  );
+                 })}
               </Row>
-              
+
               {totalPages > 1 && (
                 <div className={styles.paginationContainer}>
                   <Pagination>
@@ -307,7 +351,7 @@ export default function MyCategoryListings() {
             <div className={styles.emptyState}>
               <p>No listings found in this category for the selected filter.</p>
               <Link href="/create-listing">
-                <Button variant="primary">Create a Listing</Button>
+                <Button variant="primary">Create a Listing in {categoryName}</Button>
               </Link>
             </div>
           )}

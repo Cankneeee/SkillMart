@@ -27,7 +27,7 @@ export const getUser = async () => {
 export const getSession = async () => {
   const supabase = createClient();
   const { data, error } = await supabase.auth.getSession();
-  
+
   if (error) {
     console.error('Error fetching session:', error);
     return null;
@@ -43,17 +43,16 @@ export const getSession = async () => {
  */
 export const getCurrentUser = async (redirectToLogin = true) => {
   const supabase = createClient();
-  
   // Get the current user session
   const { data: { session } } = await supabase.auth.getSession();
-  
   if (!session && redirectToLogin) {
     // Use window.location for client-side navigation to login
+    // Note: This line remains as it's for a different scenario (initial load check)
     window.location.href = '/login';
     return { userId: null, session: null };
   }
-  
-  return { 
+
+  return {
     userId: session?.user.id || null,
     session
   };
@@ -71,7 +70,6 @@ export const signInWithEmail = async (email: string, password: string) => {
     email: email.trim().toLowerCase(),
     password,
   });
-
   return { data, error };
 };
 
@@ -87,18 +85,19 @@ export const signUpWithEmail = async (email: string, password: string) => {
     email: email.trim().toLowerCase(),
     password,
   });
-
   return { data, error };
 };
 
 /**
  * Sign out the current user
- * @param redirectPath Path to redirect to after signout
+ * This function now only signs the user out via Supabase.
+ * Redirection should be handled in the component calling this function.
  */
-export const signOut = async (redirectPath = '/login') => {
+export const signOut = async () => { // Removed redirectPath parameter
   const supabase = createClient();
   await supabase.auth.signOut();
-  window.location.href = redirectPath;
+  // REMOVED: window.location.href = redirectPath;
+  // Redirection will be handled by the calling component (e.g., NavigationBar)
 };
 
 /**
@@ -122,8 +121,8 @@ export const resetPassword = async (email: string, redirectTo: string) => {
  */
 export const updatePassword = async (newPassword: string) => {
   const supabase = createClient();
-  const { data, error } = await supabase.auth.updateUser({ 
-    password: newPassword 
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword
   });
   return { data, error };
 };
@@ -135,7 +134,7 @@ export const updatePassword = async (newPassword: string) => {
  * @returns True if redirection happened
  */
 export const redirectIfAuthenticated = async (
-  router: Router, 
+  router: Router,
   redirectPath = '/browse'
 ) => {
   const session = await getSession();
@@ -153,7 +152,7 @@ export const redirectIfAuthenticated = async (
  * @returns True if redirection happened
  */
 export const redirectIfUnauthenticated = async (
-  router: Router, 
+  router: Router,
   redirectPath = '/login'
 ) => {
   const session = await getSession();
@@ -171,7 +170,6 @@ export const redirectIfUnauthenticated = async (
  */
 export const isEmailRegistered = async (email: string) => {
   const supabase = createClient();
-  
   try {
     // First check in profiles table
     const { data: profileData } = await supabase
@@ -179,19 +177,17 @@ export const isEmailRegistered = async (email: string) => {
       .select('email')
       .eq('email', email.trim().toLowerCase())
       .maybeSingle();
-      
     if (profileData) {
       return true;
     }
-    
+
     // If admin capabilities are available, also check auth.users
     const { data, error } = await supabase.auth.admin.listUsers();
-    
     if (error) {
       console.error(`Error checking email existence: ${error.message}`);
       return false;
     }
-    
+
     return data.users.some((user) => user.email === email.trim().toLowerCase());
   } catch (error) {
     console.error('Error checking if email exists:', error);

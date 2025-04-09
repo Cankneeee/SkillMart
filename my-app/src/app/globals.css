@@ -148,10 +148,3 @@ a {
 .font-semibold { font-weight: var(--font-weight-semibold); }
 .font-bold { font-weight: var(--font-weight-bold); }
 
-/* 10. Bootstrap Overrides (Keep existing overrides) */
-.accordion-header { /* ... */ }
-.accordion-body { /* ... */ }
-.accordion-button.collapsed:hover { /* ... */ }
-.accordion-button:not(.collapsed) { /* ... */ }
-.dropdown-item.active { /* ... */ }
-.card { /* ... */ }

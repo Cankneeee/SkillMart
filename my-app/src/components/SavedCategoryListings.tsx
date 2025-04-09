@@ -33,39 +33,24 @@ export default function SavedCategoryListings() {
     const pathname = usePathname();
     const encodedCategory = params.category as string;
 
-    // Implement a more robust category decoding method (same as in working browse/category page)
+    // Implement a more robust category decoding method
     const getCategoryNameFromSlug = (slug: string): string | null => {
-      // Method 1: Try direct mapping first
       const categoryMapping = getCategoryMapping();
-      if (categoryMapping[slug]) {
-        return categoryMapping[slug];
-      }
-
-      // Method 2: Try case-insensitive lookup
+      if (categoryMapping[slug]) return categoryMapping[slug];
       const lowerSlug = slug.toLowerCase();
       const lowerCaseMapping: Record<string, string> = {};
       Object.entries(categoryMapping).forEach(([key, value]) => {
         lowerCaseMapping[key.toLowerCase()] = value;
       });
-
-      if (lowerCaseMapping[lowerSlug]) {
-        return lowerCaseMapping[lowerSlug];
-      }
-
-      // Method 3: Try manual encoding of all categories to find a match
+      if (lowerCaseMapping[lowerSlug]) return lowerCaseMapping[lowerSlug];
       const allCategories = getCategories();
-
       for (const category of allCategories) {
         const encoded = category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '-');
-        if (encoded === slug || encoded === lowerSlug) {
-          return category;
-        }
+        if (encoded === slug || encoded === lowerSlug) return category;
       }
-
       return null;
     };
 
-    // Use our robust method to find the category name
     const categoryName = getCategoryNameFromSlug(encodedCategory);
 
     const [userId, setUserId] = useState<string | null>(null);
@@ -83,7 +68,7 @@ export default function SavedCategoryListings() {
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(20); // Changed from 8 to 20
+    const [itemsPerPage] = useState(8);
     const [totalPages, setTotalPages] = useState(1);
 
     // Get listing types from database utility
@@ -91,7 +76,6 @@ export default function SavedCategoryListings() {
 
     // Redirect if category doesn't exist
     useEffect(() => {
-      // Only redirect if we have an encoded category but couldn't decode it
       if (!categoryName && encodedCategory) {
         router.push('/saved-listings');
       }
@@ -114,45 +98,34 @@ export default function SavedCategoryListings() {
         setIsLoading(true);
         setError(null);
 
-        // Get the current user session
-        const { data: { session } } = await supabase.auth.getSession();
+        // *** UPDATED CODE: Use getUser() instead of getSession() ***
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-        if (!session) {
-          // Redirect to login if no session
+        if (userError || !user) {
+          // Redirect to login if no authenticated user
           window.location.href = '/login';
           return;
         }
 
-        setUserId(session.user.id);
+        setUserId(user.id);
 
-        // Fetch user's saved listings for this category
+        // Fetch user's saved listings (all types initially) for this category
         const userSavedListings = await getUserSavedListings(
-          session.user.id,
-          selectedListingType !== "All Types" ? selectedListingType : undefined,
-          categoryName
+          user.id,
+          undefined, // Fetch all types initially
+          categoryName // Fetch only for this category
         );
 
-        setSavedListings(userSavedListings);
-
-        // Filter saved listings by category
-        const categoryListings = userSavedListings.filter(
-          item => item.listing.category === categoryName
-        );
-
-        setFilteredListings(categoryListings);
-        setTotalPages(Math.max(1, Math.ceil(categoryListings.length / itemsPerPage)));
-        setCurrentPage(1); // Reset to first page when listings change
+        setSavedListings(userSavedListings); // Store all fetched saved listings for this category
 
         // Fetch metadata for each listing in parallel
         const metadataRecord: Record<string, any> = {};
-
-        const metadataPromises = categoryListings.map(async (item) => {
+        const metadataPromises = userSavedListings.map(async (item) => {
           try {
             const [ownerProfile, ratingData] = await Promise.all([
               getUserProfile(item.listing.user_id),
               getListingRating(item.listing.id)
             ]);
-
             return {
               listingId: item.listing.id,
               authorName: ownerProfile?.username || "Unknown User",
@@ -161,19 +134,14 @@ export default function SavedCategoryListings() {
               reviewCount: ratingData.count
             };
           } catch (err) {
-            // Return default values if metadata fetch fails
-            return {
-              listingId: item.listing.id,
-              authorName: "Unknown User",
-              rating: 0,
-              reviewCount: 0
+            console.error(`Error fetching metadata for listing ${item.listing.id}:`, err);
+            return { // Default metadata on error
+              listingId: item.listing.id, authorName: "N/A", rating: 0, reviewCount: 0
             };
           }
         });
 
         const metadataResults = await Promise.all(metadataPromises);
-
-        // Add results to metadata record
         metadataResults.forEach(item => {
           metadataRecord[item.listingId] = {
             authorName: item.authorName,
@@ -182,8 +150,9 @@ export default function SavedCategoryListings() {
             reviewCount: item.reviewCount
           };
         });
-
         setListingMetadata(metadataRecord);
+
+        // Initial filtering will be handled by useEffect below
 
       } catch (err: any) {
         console.error("Error fetching user or saved listings:", err);
@@ -193,33 +162,30 @@ export default function SavedCategoryListings() {
       } finally {
         setIsLoading(false);
       }
-    }, [supabase, categoryName, selectedListingType, itemsPerPage]);
+    // Add categoryName and itemsPerPage as dependencies
+    }, [supabase, categoryName, itemsPerPage]);
 
     // Initial fetch on component mount
     useEffect(() => {
       if (categoryName) {
         fetchUserAndListings();
       }
-    }, [fetchUserAndListings, categoryName]);
+    // fetchUserAndListings has dependencies, include it here
+    }, [categoryName, fetchUserAndListings]);
 
-    // Filter listings when the selected type changes
+    // Filter listings when the selected type or base listings change
     useEffect(() => {
-      if (!savedListings || savedListings.length === 0) return;
+      if (!savedListings) return; // Guard against null/undefined
 
-      // Filter by category first (required)
-      const categoryFiltered = savedListings.filter(
-        item => item.listing.category === categoryName
-      );
-
-      // Then apply listing type filter if not "All Types"
+      // Filter by listing type if not "All Types"
       const typeFiltered = selectedListingType === "All Types"
-        ? categoryFiltered
-        : categoryFiltered.filter(item => item.listing.listing_type === selectedListingType);
+        ? savedListings // Already filtered by category in fetch
+        : savedListings.filter(item => item.listing.listing_type === selectedListingType);
 
       setFilteredListings(typeFiltered);
       setTotalPages(Math.max(1, Math.ceil(typeFiltered.length / itemsPerPage)));
       setCurrentPage(1); // Reset to first page on filter change
-    }, [selectedListingType, savedListings, categoryName, itemsPerPage]);
+    }, [selectedListingType, savedListings, itemsPerPage]);
 
     // Handler for dropdown selection
     const handleListingTypeSelect = (eventKey: string | null) => {
@@ -263,6 +229,14 @@ export default function SavedCategoryListings() {
         <div className={styles.pageContainer}>
           <Container>
             <p className="text-center my-5">Loading your saved listings...</p>
+             {/* Optionally show skeletons */}
+             <Row>
+                {Array.from({ length: 4 }).map((_, index) => (
+                    <Col key={index} xs={12} sm={6} md={4} lg={3} className="mb-4">
+                        <ListingCardSkeleton />
+                    </Col>
+                ))}
+            </Row>
           </Container>
         </div>
       );
@@ -275,7 +249,7 @@ export default function SavedCategoryListings() {
           <Container>
             <div className="text-center my-5">
               <p className="text-danger">{error}</p>
-              <Button variant="primary" onClick={() => fetchUserAndListings()}>
+              <Button variant="primary" onClick={fetchUserAndListings}>
                 Try Again
               </Button>
             </div>
@@ -332,7 +306,7 @@ export default function SavedCategoryListings() {
                 {currentListings.map((item) => {
                   const listing = item.listing;
                   const metadata = listingMetadata[listing.id] || {
-                    authorName: "Unknown User",
+                    authorName: "Loading...",
                     rating: 0,
                     reviewCount: 0
                   };
