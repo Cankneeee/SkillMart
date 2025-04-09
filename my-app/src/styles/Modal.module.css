@@ -1,99 +1,141 @@
-/* Unified Modal Styling for all modals in the application */
+/* src/styles/Modal.module.css */
 
-/* Apply these classes directly to the Modal components */
-.customModal :global(.modal-content) {
+/* --- RENAMED CLASS: from .customModal to .modal --- */
+/* This class should be applied to the Modal component via className={modalStyles.modal} */
+.modal :global(.modal-content) {
   border-radius: var(--radius-md);
-  border: none;
+  border: none; /* Ensure no default border */
   box-shadow: var(--shadow-md);
-  background-color: var(--body-bg);
+  background-color: var(--body-bg); /* Use app body background */
+  color: var(--header-text); /* Default text color for container */
 }
 
-.customModal :global(.modal-header) {
-  border-bottom: 1px solid var(--navbar-bg);
+/* Apply styles to header, title, body, footer *within* the .modal scope */
+.modal :global(.modal-header) {
+  border-bottom: none; /* Explicitly remove border */
   padding: var(--spacing-md) var(--spacing-lg);
+  color: var(--header-text);
 }
 
-.customModal :global(.modal-title) {
+.modal :global(.modal-title) {
   color: var(--header-text);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-xl);
-  font-family: var(--font-montserrat), sans-serif;
+  font-family: var(--font-montserrat), sans-serif; /* Use Montserrat font */
 }
 
-.customModal :global(.modal-body) {
+/* Style the default bootstrap close button */
+.modal :global(.modal-header .btn-close) {
+   opacity: 0.7; /* Make it slightly less prominent */
+   /* Base color filter (approximating --header-text: #112D4E) */
+   filter: invert(15%) sepia(27%) saturate(1466%) hue-rotate(180deg) brightness(90%) contrast(91%);
+   transition: filter 0.2s ease-in-out, opacity 0.2s ease-in-out; /* Add transition */
+}
+ /* Hover style for the close button */
+ .modal :global(.modal-header .btn-close:hover) {
+    opacity: 1; /* Make fully opaque on hover */
+    /* --- UPDATED FILTER --- */
+    /* This filter approximates a purple color like --hover-header (#5E35B1) */
+    /* For exact color control, replacing with an SVG icon is recommended */
+    filter: invert(27%) sepia(50%) saturate(3000%) hue-rotate(255deg) brightness(85%) contrast(95%);
+ }
+
+
+.modal :global(.modal-body) {
   padding: var(--spacing-lg);
-  color: var(--header-text);
+  /* --- UPDATED COLOR --- */
+  color: #000000; /* Use black for body text (or #212529 if preferred) */
+  /* --------------------- */
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
-  font-family: var(--font-roboto), sans-serif;
+  font-family: var(--font-roboto), sans-serif; /* Use Roboto font */
 }
 
-.customModal :global(.modal-footer) {
-  border-top: 1px solid var(--navbar-bg);
+.modal :global(.modal-footer) {
+  border-top: none; /* Explicitly remove border */
   padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
 }
 
-/* Close button (X) in the top-right corner */
-.customModal :global(.btn-close) {
-  color: var(--header-text);
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-}
+/* --- Styling React-Bootstrap Buttons within the Modal --- */
 
-.customModal :global(.btn-close:hover) {
-  opacity: 1;
-}
-
-/* Modal button styling */
-.modalButton {
+/* Primary Button */
+.modal :global(.btn-primary) {
   background-color: var(--button-bg);
+  border-color: var(--button-bg);
   color: var(--button-text);
-  border: none;
-  border-radius: var(--radius-sm);
   padding: var(--spacing-xs) var(--spacing-lg);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   font-family: var(--font-roboto), sans-serif;
 }
 
-.modalButton:hover {
+.modal :global(.btn-primary:hover),
+.modal :global(.btn-primary:focus) {
   background-color: var(--hover-button);
+  border-color: var(--hover-button);
+  color: var(--button-text);
+  box-shadow: none;
 }
+ .modal :global(.btn-primary:active) {
+   background-color: var(--hover-button) !important;
+   border-color: var(--hover-button) !important;
+   box-shadow: none !important;
+ }
 
-/* Secondary button variant */
-.modalButtonSecondary {
+
+/* Secondary Button */
+.modal :global(.btn-secondary) {
   background-color: #6c757d;
+  border-color: #6c757d;
   color: white;
-  border: none;
-  border-radius: var(--radius-sm);
   padding: var(--spacing-xs) var(--spacing-lg);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   font-family: var(--font-roboto), sans-serif;
 }
 
-.modalButtonSecondary:hover {
+.modal :global(.btn-secondary:hover),
+.modal :global(.btn-secondary:focus) {
   background-color: #5a6268;
-}
-
-/* Danger button variant */
-.modalButtonDanger {
-  background-color: var(--error-button);
+  border-color: #545b62;
   color: white;
-  border: none;
-  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+ .modal :global(.btn-secondary:active) {
+   background-color: #545b62 !important;
+   border-color: #545b62 !important;
+   box-shadow: none !important;
+ }
+
+/* Danger Button */
+.modal :global(.btn-danger) {
+  background-color: var(--error-button);
+  border-color: var(--error-button);
+  color: var(--button-text);
   padding: var(--spacing-xs) var(--spacing-lg);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   font-family: var(--font-roboto), sans-serif;
 }
 
-.modalButtonDanger:hover {
-  background-color: darken(var(--error-button), 10%);
+.modal :global(.btn-danger:hover),
+.modal :global(.btn-danger:focus) {
+  background-color: var(--error-header-text);
+  border-color: var(--error-header-text);
+  color: var(--button-text);
+  box-shadow: none;
 }
+ .modal :global(.btn-danger:active) {
+   background-color: var(--error-header-text) !important;
+   border-color: var(--error-header-text) !important;
+   box-shadow: none !important;
+ }

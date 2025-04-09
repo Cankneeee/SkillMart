@@ -1,3 +1,4 @@
+// src/components/SavedCategoryListings.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,9 +10,9 @@ import Link from "next/link";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import styles from "@/styles/SavedCategoryListings.module.css";
 import { createClient } from "@/utils/supabase/client";
-import { 
-  getUserSavedListings, 
-  getListingTypes, 
+import {
+  getUserSavedListings,
+  getListingTypes,
   getCategories,
   getCategoryMapping,
   getListingRating,
@@ -31,7 +32,7 @@ export default function SavedCategoryListings() {
     const router = useRouter();
     const pathname = usePathname();
     const encodedCategory = params.category as string;
-    
+
     // Implement a more robust category decoding method (same as in working browse/category page)
     const getCategoryNameFromSlug = (slug: string): string | null => {
       // Method 1: Try direct mapping first
@@ -39,55 +40,55 @@ export default function SavedCategoryListings() {
       if (categoryMapping[slug]) {
         return categoryMapping[slug];
       }
-      
+
       // Method 2: Try case-insensitive lookup
       const lowerSlug = slug.toLowerCase();
       const lowerCaseMapping: Record<string, string> = {};
       Object.entries(categoryMapping).forEach(([key, value]) => {
         lowerCaseMapping[key.toLowerCase()] = value;
       });
-      
+
       if (lowerCaseMapping[lowerSlug]) {
         return lowerCaseMapping[lowerSlug];
       }
-      
+
       // Method 3: Try manual encoding of all categories to find a match
       const allCategories = getCategories();
-      
+
       for (const category of allCategories) {
         const encoded = category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '-');
         if (encoded === slug || encoded === lowerSlug) {
           return category;
         }
       }
-      
+
       return null;
     };
-    
+
     // Use our robust method to find the category name
     const categoryName = getCategoryNameFromSlug(encodedCategory);
-    
+
     const [userId, setUserId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedListingType, setSelectedListingType] = useState("All Types");
     const [savedListings, setSavedListings] = useState<(SavedListing & { listing: Listing })[]>([]);
     const [filteredListings, setFilteredListings] = useState<(SavedListing & { listing: Listing })[]>([]);
-    const [listingMetadata, setListingMetadata] = useState<Record<string, { 
-      authorName: string, 
+    const [listingMetadata, setListingMetadata] = useState<Record<string, {
+      authorName: string,
       authorProfilePic?: string,
       rating: number,
       reviewCount: number
     }>>({});
-    
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(8);
+    const [itemsPerPage] = useState(20); // Changed from 8 to 20
     const [totalPages, setTotalPages] = useState(1);
-    
+
     // Get listing types from database utility
     const listingTypeOptions = getListingTypes();
-    
+
     // Redirect if category doesn't exist
     useEffect(() => {
       // Only redirect if we have an encoded category but couldn't decode it
@@ -95,7 +96,7 @@ export default function SavedCategoryListings() {
         router.push('/saved-listings');
       }
     }, [categoryName, encodedCategory, router]);
-    
+
     // If no category name (and we're not yet redirecting), show a loading state
     if (!categoryName) {
       return (
@@ -106,52 +107,52 @@ export default function SavedCategoryListings() {
         </div>
       );
     }
-    
+
     // Fetch user session and saved listings
     const fetchUserAndListings = useCallback(async () => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Get the current user session
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (!session) {
           // Redirect to login if no session
           window.location.href = '/login';
           return;
         }
-        
+
         setUserId(session.user.id);
-        
+
         // Fetch user's saved listings for this category
         const userSavedListings = await getUserSavedListings(
           session.user.id,
           selectedListingType !== "All Types" ? selectedListingType : undefined,
           categoryName
         );
-        
+
         setSavedListings(userSavedListings);
-        
+
         // Filter saved listings by category
         const categoryListings = userSavedListings.filter(
           item => item.listing.category === categoryName
         );
-        
+
         setFilteredListings(categoryListings);
         setTotalPages(Math.max(1, Math.ceil(categoryListings.length / itemsPerPage)));
         setCurrentPage(1); // Reset to first page when listings change
-        
+
         // Fetch metadata for each listing in parallel
         const metadataRecord: Record<string, any> = {};
-        
+
         const metadataPromises = categoryListings.map(async (item) => {
           try {
             const [ownerProfile, ratingData] = await Promise.all([
               getUserProfile(item.listing.user_id),
               getListingRating(item.listing.id)
             ]);
-            
+
             return {
               listingId: item.listing.id,
               authorName: ownerProfile?.username || "Unknown User",
@@ -169,9 +170,9 @@ export default function SavedCategoryListings() {
             };
           }
         });
-        
+
         const metadataResults = await Promise.all(metadataPromises);
-        
+
         // Add results to metadata record
         metadataResults.forEach(item => {
           metadataRecord[item.listingId] = {
@@ -181,9 +182,9 @@ export default function SavedCategoryListings() {
             reviewCount: item.reviewCount
           };
         });
-        
+
         setListingMetadata(metadataRecord);
-        
+
       } catch (err: any) {
         console.error("Error fetching user or saved listings:", err);
         setError(err.message || "Failed to load saved listings");
@@ -193,59 +194,59 @@ export default function SavedCategoryListings() {
         setIsLoading(false);
       }
     }, [supabase, categoryName, selectedListingType, itemsPerPage]);
-    
+
     // Initial fetch on component mount
     useEffect(() => {
       if (categoryName) {
         fetchUserAndListings();
       }
     }, [fetchUserAndListings, categoryName]);
-    
+
     // Filter listings when the selected type changes
     useEffect(() => {
       if (!savedListings || savedListings.length === 0) return;
-      
+
       // Filter by category first (required)
       const categoryFiltered = savedListings.filter(
         item => item.listing.category === categoryName
       );
-      
+
       // Then apply listing type filter if not "All Types"
-      const typeFiltered = selectedListingType === "All Types" 
-        ? categoryFiltered 
+      const typeFiltered = selectedListingType === "All Types"
+        ? categoryFiltered
         : categoryFiltered.filter(item => item.listing.listing_type === selectedListingType);
-      
+
       setFilteredListings(typeFiltered);
       setTotalPages(Math.max(1, Math.ceil(typeFiltered.length / itemsPerPage)));
       setCurrentPage(1); // Reset to first page on filter change
     }, [selectedListingType, savedListings, categoryName, itemsPerPage]);
-    
+
     // Handler for dropdown selection
     const handleListingTypeSelect = (eventKey: string | null) => {
       if (eventKey) {
         setSelectedListingType(eventKey);
       }
     };
-  
+
     // Pagination handlers
     const handlePageChange = (pageNumber: number) => {
       setCurrentPage(pageNumber);
     };
-  
+
     // Get current listings based on pagination
     const getCurrentListings = () => {
       const indexOfLastItem = currentPage * itemsPerPage;
       const indexOfFirstItem = indexOfLastItem - itemsPerPage;
       return filteredListings.slice(indexOfFirstItem, indexOfLastItem);
     };
-  
+
     // Create pagination items
     const renderPaginationItems = () => {
       let items = [];
       for (let number = 1; number <= totalPages; number++) {
         items.push(
-          <Pagination.Item 
-            key={number} 
+          <Pagination.Item
+            key={number}
             active={number === currentPage}
             onClick={() => handlePageChange(number)}
           >
@@ -255,7 +256,7 @@ export default function SavedCategoryListings() {
       }
       return items;
     };
-    
+
     // Show loading state
     if (isLoading) {
       return (
@@ -266,7 +267,7 @@ export default function SavedCategoryListings() {
         </div>
       );
     }
-  
+
     // Show error state
     if (error) {
       return (
@@ -282,10 +283,10 @@ export default function SavedCategoryListings() {
         </div>
       );
     }
-  
+
     // Get current page of listings
     const currentListings = getCurrentListings();
-  
+
     return (
       <div className={styles.pageContainer}>
         <Container>
@@ -300,7 +301,7 @@ export default function SavedCategoryListings() {
                 ({filteredListings.length} listing{filteredListings.length !== 1 ? 's' : ''})
               </span>
             </div>
-            
+
             <div className={styles.headerActions}>
               <div className={styles.filterContainer}>
                 <span className={styles.filterLabel}>Filter by:</span>
@@ -310,8 +311,8 @@ export default function SavedCategoryListings() {
                   </Dropdown.Toggle>
                   <Dropdown.Menu className={styles.dropdownMenu}>
                     {listingTypeOptions.map((type) => (
-                      <Dropdown.Item 
-                        key={type} 
+                      <Dropdown.Item
+                        key={type}
                         eventKey={type}
                         active={selectedListingType === type}
                         className={styles.dropdownItem}
@@ -324,7 +325,7 @@ export default function SavedCategoryListings() {
               </div>
             </div>
           </div>
-          
+
           {filteredListings.length > 0 ? (
             <>
               <Row>
@@ -335,10 +336,10 @@ export default function SavedCategoryListings() {
                     rating: 0,
                     reviewCount: 0
                   };
-                  
+
                   return (
                     <Col key={listing.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
-                      <ListingCard 
+                      <ListingCard
                         id={listing.id}
                         title={listing.title}
                         image={listing.image_url || "/listing-default-photo.png"}
@@ -354,7 +355,7 @@ export default function SavedCategoryListings() {
                   );
                 })}
               </Row>
-              
+
               {totalPages > 1 && (
                 <div className={styles.paginationContainer}>
                   <Pagination>

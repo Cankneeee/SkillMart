@@ -1,8 +1,8 @@
 'use client';
 
-import { Modal, Button } from 'react-bootstrap';
-import { useRouter } from 'next/navigation';
-import styles from '@/styles/Modal.module.css';
+import { Modal } from 'react-bootstrap'; // Only Modal is needed from react-bootstrap
+// Import component-specific CSS module
+import styles from '@/styles/ConfirmationModal.module.css';
 
 interface ConfirmationModalProps {
   show: boolean;
@@ -12,7 +12,7 @@ interface ConfirmationModalProps {
   onConfirm: () => void;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'primary' | 'secondary';
+  variant?: 'danger' | 'primary' | 'secondary'; // Variant determines confirm button style
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -23,47 +23,46 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  variant = 'danger'
+  variant = 'danger' // Default confirm button to danger style
 }) => {
-  const router = useRouter();
 
-  // Function to determine which button class to use based on variant
-  const getButtonClass = () => {
+  // Helper function to get the correct CSS module class for the confirm button
+  const getConfirmButtonClass = () => {
     if (variant === 'danger') return styles.modalButtonDanger;
-    if (variant === 'secondary') return styles.modalButtonSecondary;
+    // Use primary style for 'primary' or 'secondary' variant prop
     return styles.modalButton;
   };
 
   return (
-    <div className={styles.customModal}>
-      <Modal 
-        show={show} 
-        onHide={onCancel}
-        centered
-        backdrop="static"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {message}
-        </Modal.Body>
-        <Modal.Footer>
-          <button 
-            className={styles.modalButtonSecondary} 
-            onClick={onCancel}
-          >
-            {cancelText}
-          </button>
-          <button 
-            className={getButtonClass()} 
-            onClick={onConfirm}
-          >
-            {confirmText}
-          </button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+    <Modal
+      show={show}
+      onHide={onCancel}
+      // Apply the specific class from this component's CSS module
+      className={styles.confirmationModal}
+      centered
+      backdrop="static"
+      // --- ADDED: Disable default react-bootstrap animation ---
+      animation={false}
+      // -------------------------------------------------------
+    >
+      <Modal.Header closeButton>
+        {/* Title uses styles inherited via .confirmationModal scope */}
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {/* Body uses styles inherited via .confirmationModal scope */}
+        {message}
+      </Modal.Body>
+      <Modal.Footer>
+        {/* Use regular <button> elements with CSS module classes */}
+        <button type="button" className={styles.modalButton} onClick={onCancel}>
+          {cancelText}
+        </button>
+        <button type="button" className={getConfirmButtonClass()} onClick={onConfirm}>
+          {confirmText}
+        </button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 

@@ -1,99 +1,134 @@
-/* Unified Modal Styling for all modals in the application */
+/* src/styles/ConfirmationModal.module.css */
+/* Styles specifically for the ConfirmationModal component */
+/* Designed to visually match Modal.module.css */
 
-/* Apply these classes directly to the Modal components */
-.customModal :global(.modal-content) {
+/* Apply to the main Modal component via className={styles.confirmationModal} */
+.confirmationModal :global(.modal-content) {
   border-radius: var(--radius-md);
-  border: none;
+  border: none; /* Ensure no default border */
   box-shadow: var(--shadow-md);
-  background-color: var(--body-bg);
+  background-color: var(--body-bg); /* Use app body background */
+  color: var(--header-text); /* Default text color */
 }
 
-.customModal :global(.modal-header) {
-  border-bottom: 1px solid var(--navbar-bg);
+/* Apply styles to header, title, body, footer *within* the .confirmationModal scope */
+.confirmationModal :global(.modal-header) {
+  border-bottom: none; /* Explicitly remove border */
   padding: var(--spacing-md) var(--spacing-lg);
+  color: var(--header-text);
 }
 
-.customModal :global(.modal-title) {
+.confirmationModal :global(.modal-title) {
   color: var(--header-text);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-xl);
-  font-family: var(--font-montserrat), sans-serif;
+  font-family: var(--font-montserrat), sans-serif; /* Use Montserrat font */
 }
 
-.customModal :global(.modal-body) {
+/* Style the default bootstrap close button */
+.confirmationModal :global(.modal-header .btn-close) {
+   opacity: 0.7;
+   /* Base color filter (approximating --header-text: #112D4E) */
+   filter: invert(15%) sepia(27%) saturate(1466%) hue-rotate(180deg) brightness(90%) contrast(91%);
+   transition: filter 0.2s ease-in-out, opacity 0.2s ease-in-out;
+}
+ .confirmationModal :global(.modal-header .btn-close:hover) {
+    opacity: 1;
+    /* Filter approximating purple --hover-header (#5E35B1) */
+    filter: invert(27%) sepia(50%) saturate(3000%) hue-rotate(255deg) brightness(85%) contrast(95%);
+ }
+
+
+.confirmationModal :global(.modal-body) {
   padding: var(--spacing-lg);
-  color: var(--header-text);
+  color: #000000; /* Use black for body text */
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
-  font-family: var(--font-roboto), sans-serif;
+  font-family: var(--font-roboto), sans-serif; /* Use Roboto font */
 }
 
-.customModal :global(.modal-footer) {
-  border-top: 1px solid var(--navbar-bg);
+.confirmationModal :global(.modal-footer) {
+  border-top: none; /* Explicitly remove border */
   padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
 }
 
-/* Close button (X) in the top-right corner */
-.customModal :global(.btn-close) {
-  color: var(--header-text);
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
+/* --- Custom Button Styles for ConfirmationModal --- */
+/* Base styles for custom buttons */
+.modalButton, .modalButtonSecondary, .modalButtonDanger {
+  padding: var(--spacing-xs) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-sm);
+  border: none; /* Remove default button border */
+  cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  font-family: var(--font-roboto), sans-serif; /* Ensure button font */
+  line-height: 1.5; /* Ensure text vertical alignment */
 }
 
-.customModal :global(.btn-close:hover) {
-  opacity: 1;
-}
-
-/* Modal button styling */
+/* Primary Button Style (Default Confirm) */
 .modalButton {
-  background-color: var(--button-bg);
+  background-color: var(--button-bg); /* App's primary button color */
+  border-color: var(--button-bg);
   color: var(--button-text);
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-family: var(--font-roboto), sans-serif;
 }
 
-.modalButton:hover {
-  background-color: var(--hover-button);
+.modalButton:hover,
+.modalButton:focus {
+  background-color: var(--hover-button); /* App's hover color */
+  border-color: var(--hover-button);
+  color: var(--button-text);
+  box-shadow: none;
+  outline: none; /* Remove focus outline */
 }
+.modalButton:active {
+   background-color: var(--hover-button) !important;
+   border-color: var(--hover-button) !important;
+   box-shadow: none !important;
+ }
 
-/* Secondary button variant */
+
+/* Secondary Button Style (Cancel) */
 .modalButtonSecondary {
-  background-color: #6c757d;
+  background-color: #6c757d; /* Default bootstrap secondary */
+  border-color: #6c757d;
   color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-family: var(--font-roboto), sans-serif;
 }
 
-.modalButtonSecondary:hover {
+.modalButtonSecondary:hover,
+.modalButtonSecondary:focus {
   background-color: #5a6268;
-}
-
-/* Danger button variant */
-.modalButtonDanger {
-  background-color: var(--error-button);
+  border-color: #545b62;
   color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs) var(--spacing-lg);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-family: var(--font-roboto), sans-serif;
+  box-shadow: none;
+  outline: none;
+}
+.modalButtonSecondary:active {
+   background-color: #545b62 !important;
+   border-color: #545b62 !important;
+   box-shadow: none !important;
+ }
+
+/* Danger Button Style (Confirm Delete) */
+.modalButtonDanger {
+  background-color: var(--error-button); /* App's danger color */
+  border-color: var(--error-button);
+  color: var(--button-text); /* Assuming light text for danger */
 }
 
-.modalButtonDanger:hover {
-  background-color: darken(var(--error-button), 10%);
+.modalButtonDanger:hover,
+.modalButtonDanger:focus {
+  background-color: var(--error-header-text); /* App's darker danger color */
+  border-color: var(--error-header-text);
+  color: var(--button-text);
+  box-shadow: none;
+  outline: none;
 }
+.modalButtonDanger:active {
+   background-color: var(--error-header-text) !important;
+   border-color: var(--error-header-text) !important;
+   box-shadow: none !important;
+ }

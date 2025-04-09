@@ -1,46 +1,59 @@
+/* src/styles/Profile.module.css */
+
 .profileContainer {
   width: 100%;
   padding: var(--spacing-lg) 0;
   background-color: var(--body-bg);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; /* Keeps content horizontally centered */
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .profileContent {
   width: 100%;
   max-width: 550px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin-top: auto; /* Vertically center */
+  margin-bottom: auto; /* Vertically center */
 }
 
 .profileHeader {
-  position: relative;
+  /* position: relative; */ /* <<< REMOVED: No longer needed here */
   margin-bottom: var(--spacing-md);
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 120px;
 }
 
+/* --- ADDED: Wrapper for image and button --- */
+.imageButtonWrapper {
+  position: relative; /* Establishes positioning context for the button */
+  width: 120px;       /* Match image width */
+  height: 120px;      /* Match image height */
+  margin-bottom: var(--spacing-sm); /* Keep space below */
+}
+/* ----------------------------------------- */
+
 .profileImage {
-  width: 120px;
-  height: 120px;
+  display: block; /* Make image behave predictably */
+  width: 100%;    /* Fill the wrapper */
+  height: 100%;   /* Fill the wrapper */
   border-radius: var(--radius-full);
   object-fit: cover;
 }
 
 .defaultProfileIcon {
+  /* Styles for default icon if needed */
   font-size: 120px;
   color: var(--header-text);
 }
 
-/* Profile Pic Edit Button - Removed highlight/focus styles */
+/* Profile Pic Edit Button */
 .editProfileButton {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
+  position: absolute; /* Position is relative to .imageButtonWrapper */
+  bottom: 5px;        /* Position near bottom of wrapper */
+  right: 5px;         /* Position near right of wrapper */
   background-color: var(--button-bg);
   color: var(--button-text);
   border-radius: var(--radius-full);
@@ -52,37 +65,36 @@
   align-items: center;
   justify-content: center;
   border: none;
-  box-shadow: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Add subtle shadow */
   outline: none;
+  cursor: pointer;
+  z-index: 1; /* Ensure it's above the image */
 }
 
 .editProfileButton:hover {
   background-color: var(--hover-button);
 }
 
-/* Remove focus highlight */
 .editProfileButton:focus {
   outline: none;
   box-shadow: none;
 }
 
-/* Remove active state highlight */
 .editProfileButton:active {
   background-color: var(--button-bg);
 }
 
-/* Row styling with full width and vertical alignment */
+/* Row styling */
 .profileRow {
   margin-bottom: var(--spacing-md);
   width: 100%;
-  background-color: var(--body-bg);
   display: grid;
-  grid-template-columns: 120px minmax(200px, 1fr) 60px;
-  align-items: center;
+  grid-template-columns: 120px minmax(200px, 1fr) 60px; /* Label | Value | Buttons */
+  align-items: center; /* Vertically align items within the row */
   gap: 8px;
 }
 
-/* Left-align field labels with compact width */
+/* Labels */
 .profileLabel {
   font-family: var(--font-montserrat);
   font-size: var(--font-size-base);
@@ -92,12 +104,17 @@
   padding-right: 10px;
 }
 
-/* Value field with constrained width */
+/* Values */
 .profileValue {
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 5px;
+  color: var(--header-text);
+  font-family: var(--font-roboto), sans-serif;
+  display: flex;
+  align-items: center;
+  min-height: 38px; /* Match input field height */
 }
 
 /* Input fields */
@@ -107,6 +124,9 @@
   border: 1px solid var(--input-border);
   border-radius: var(--radius-sm);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  font-family: var(--font-roboto), sans-serif;
+  min-height: 38px; /* Consistent height */
+  box-sizing: border-box;
 }
 
 .inputField:focus,
@@ -121,7 +141,7 @@
   border-width: 2px !important;
 }
 
-/* Button column alignment with tighter spacing */
+/* Button column */
 .buttonColumn {
   display: flex;
   justify-content: flex-end;
@@ -129,7 +149,7 @@
   padding-left: 5px;
 }
 
-/* Compact Edit Button */
+/* Edit/Save/Cancel Button */
 .editButton {
   width: 32px;
   height: 32px;
@@ -142,9 +162,10 @@
   justify-content: center;
   border-radius: var(--radius-sm);
   padding: 0;
+  cursor: pointer;
 }
 
-/* Smaller gap between the save & discard buttons */
+/* Spacing between save/cancel buttons */
 .editButton + .editButton {
   margin-left: 4px;
 }
@@ -153,73 +174,86 @@
   background-color: var(--hover-button);
 }
 
-/* Error Message */
+/* Error/Success/Loading Messages */
+.errorText, .successText, .loadingText {
+  width: 100%;
+  text-align: center;
+  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
 .errorText {
   color: var(--error-header-text);
-  font-size: 0.9rem;
-  margin-top: var(--spacing-xs);
+  background-color: var(--error-background);
 }
+
+.successText {
+  color: green;
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.loadingText {
+  color: var(--header-text);
+  font-style: italic;
+}
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .profileRow {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 576px) {
-  .profileContainer {
-    padding: var(--spacing-md);
-  }
-  
-  /* Create more compact layout on small screens */
-  .profileRow {
-    margin-bottom: 10px;
-  }
-  
-  /* Ensure inputs don't overflow */
-  .inputField {
-    padding: 6px;
-    font-size: 14px;
-  }
-  
-  /* Adjust buttons to stay aligned */
-  .editButton {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-  }
-}
-
-/* Responsive handling for all screen sizes */
-@media (max-width: 768px) {
-  .profileRow {
     grid-template-columns: 100px minmax(150px, 1fr) 50px;
   }
-  
   .profileContent {
     max-width: 500px;
   }
 }
 
 @media (max-width: 480px) {
+  .profileContainer {
+    padding: var(--spacing-md) 0;
+  }
+  .profileContent {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+  .imageButtonWrapper { /* Adjust wrapper size if needed */
+     width: 100px;
+     height: 100px;
+  }
+  .profileImage, .defaultProfileIcon { /* Match wrapper size */
+     width: 100px;
+     height: 100px;
+     font-size: 100px;
+  }
+  .editProfileButton { /* Slightly smaller button */
+     width: 28px;
+     height: 28px;
+     padding: 4px;
+     bottom: 3px;
+     right: 3px;
+  }
   .profileRow {
     grid-template-columns: 85px minmax(100px, 1fr) 40px;
     gap: 4px;
   }
-  
   .profileLabel {
     font-size: 14px;
   }
-  
+  .inputField {
+    padding: 6px;
+    font-size: 14px;
+    min-height: 34px;
+  }
+   .profileValue {
+     min-height: 34px;
+     font-size: 14px;
+   }
   .editButton {
     width: 30px;
     height: 30px;
     min-width: 30px;
-  }
-  
-  .profileContent {
-    max-width: 100%;
-    padding: 0 10px;
   }
 }

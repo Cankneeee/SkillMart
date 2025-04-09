@@ -1,8 +1,16 @@
+// src/scripts/fake-data-generator.ts
+
+// --- Base Imports ---
 import { resolve } from 'path';
 import * as dotenv from 'dotenv';
+// --- Supabase Imports ---
 import { createClient, SupabaseClient, PostgrestError, AuthError } from '@supabase/supabase-js';
+// --- OpenAI Imports ---
 import { OpenAI } from 'openai';
 import { EmbeddingCreateParams } from 'openai/resources/embeddings';
+
+// --- Load Environment Variables ---
+// Load from .env.local in the project root
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 // --- Environment Variable Checks ---
@@ -83,29 +91,40 @@ const users: FakeUserData[] = [
   { id: '641a5f43-f6d2-478e-b60d-bf9730deb9e1', email: 'testuse9@gmail.com', username: 'TestUser9', password: 'Password123!' },
 ];
 
+// --- EXPANDED LISTING TEMPLATES ---
 const listingTemplates = [
-  { title: "{skill} Services by {username}", description: "Experienced {skill} professional offering high-quality services. I have {years} years of experience and specialize in {specialty}. My approach focuses on {approach}, ensuring you get the best results. Contact me for a free consultation!", listing_type: "Providing Skills", categories: ["Business", "IT & Software", "Design", "Marketing", "Finance & Accounting"] },
-  { title: "Looking for {skill} Expert", description: "I need help with {problem}. Seeking someone experienced in {skill} who can assist with this project. My budget is flexible for the right expertise. Ideal candidate will have knowledge of {tools} and experience with {specialty}.", listing_type: "Looking for Skills", categories: ["Office Productivity", "Personal Development", "IT & Software", "Teaching & Academics"] },
-  { title: "Trading {skill1} for {skill2}", description: "I'm offering my expertise in {skill1} in exchange for help with {skill2}. I can provide {offering} and would like to receive {receiving} in return. This is a great opportunity for skills exchange and mutual growth.", listing_type: "Trading Skills", categories: ["Photography & Video", "Music", "Lifestyle", "Art", "Sports"] },
-  { title: "Affordable {skill} Lessons", description: "Learn {skill} from an experienced instructor. I offer personalized lessons for all levels, from beginner to advanced. My teaching method emphasizes {approach}, and I provide {materials}. Sessions available online or in-person.", listing_type: "Providing Skills", categories: ["Music", "Teaching & Academics", "Health & Fitness", "Personal Development"] },
-  { title: "Professional {skill} Consultant", description: "Strategic {skill} consulting to help you achieve your goals. I provide comprehensive analysis, actionable recommendations, and implementation support. My expertise includes {specialty1}, {specialty2}, and {specialty3}. Proven track record of success.", listing_type: "Providing Skills", categories: ["Business", "Finance & Accounting", "Marketing", "IT & Software"] }
-] as Array<{ title: string; description: string; listing_type: FakeListingData['listing_type']; categories: string[]; }>;
+  // Existing
+  { title: "{skill} Services by {username}", description: "Experienced {skill} professional offering high-quality services. I have {years} years of experience and specialize in {specialty}. My approach focuses on {approach}, ensuring you get the best results. Contact me for a free consultation!", listing_type: "Providing Skills" },
+  { title: "Looking for {skill} Expert", description: "I need help with {problem}. Seeking someone experienced in {skill} who can assist with this project. My budget is flexible for the right expertise. Ideal candidate will have knowledge of {tools} and experience with {specialty}.", listing_type: "Looking for Skills" },
+  { title: "Trading {skill1} for {skill2}", description: "I'm offering my expertise in {skill1} in exchange for help with {skill2}. I can provide {offering} and would like to receive {receiving} in return. This is a great opportunity for skills exchange and mutual growth.", listing_type: "Trading Skills" },
+  { title: "Affordable {skill} Lessons", description: "Learn {skill} from an experienced instructor. I offer personalized lessons for all levels, from beginner to advanced. My teaching method emphasizes {approach}, and I provide {materials}. Sessions available online or in-person.", listing_type: "Providing Skills" },
+  { title: "Professional {skill} Consultant", description: "Strategic {skill} consulting to help you achieve your goals. I provide comprehensive analysis, actionable recommendations, and implementation support. My expertise includes {specialty1}, {specialty2}, and {specialty3}. Proven track record of success.", listing_type: "Providing Skills" },
+  // New Templates
+  { title: "Project: {skill} Development Needed", description: "Looking for a skilled professional in {skill} to complete a project involving {problem}. The scope includes {specialty1} and {specialty2}. Please provide portfolio examples and estimated timeline.", listing_type: "Looking for Skills" },
+  { title: "{skill} Mentorship Program", description: "Offering personalized mentorship in {skill} for aspiring professionals. With {years} years in the field, I can guide you through {specialty1}, {specialty2}, and career development. Limited spots available.", listing_type: "Providing Skills" },
+  { title: "Need Help with {tools} Software", description: "Seeking an expert in {tools} to provide training/support for {problem}. Must have advanced knowledge and practical experience. Please detail your proficiency.", listing_type: "Looking for Skills" },
+  { title: "Creative Collaboration: {skill1} + {skill2}", description: "I'm a {skill1} specialist looking to collaborate with someone skilled in {skill2} on an exciting new project. Let's combine our talents! Offering {offering} in exchange for {receiving}.", listing_type: "Trading Skills" },
+  { title: "Workshop: Introduction to {skill}", description: "Hosting an online workshop covering the fundamentals of {skill}. Perfect for beginners! Learn {specialty1}, {specialty2}, and practical {approach} techniques. Date: {date_placeholder}. Sign up now!", listing_type: "Providing Skills" },
+  { title: "Urgent: {skill} Problem Solver Needed", description: "Facing a critical issue related to {problem} and need immediate {skill} expertise. Requires deep knowledge of {specialty}. Offering competitive rate for fast turnaround.", listing_type: "Looking for Skills" },
+  { title: "Custom {skill} Solutions", description: "Providing bespoke {skill} solutions tailored to your specific needs. Expertise in {specialty1}, {specialty2}, and integrating with {tools}. Let's discuss how I can help your project succeed.", listing_type: "Providing Skills" },
+] as Array<{ title: string; description: string; listing_type: FakeListingData['listing_type']; }>;
 
+// --- EXPANDED CATEGORY SKILLS ---
 const categorySkills: Record<string, string[]> = {
-  "Business": ["Business Strategy", "Project Management", "Entrepreneurship", "Operational Efficiency", "Team Leadership"],
-  "Finance & Accounting": ["Financial Analysis", "Bookkeeping", "Tax Planning", "Investment Strategy", "Financial Modeling"],
-  "IT & Software": ["Web Development", "Mobile App Development", "Software Engineering", "Cloud Architecture", "DevOps"],
-  "Office Productivity": ["Microsoft Office", "Google Workspace", "Data Analysis", "Process Optimization", "Automation"],
-  "Personal Development": ["Life Coaching", "Time Management", "Public Speaking", "Mindfulness", "Goal Setting"],
-  "Design": ["Graphic Design", "UI/UX Design", "Brand Identity", "Illustration", "Motion Graphics"],
-  "Art": ["Painting", "Drawing", "Sculpture", "Digital Art", "Mixed Media"],
-  "Marketing": ["Digital Marketing", "Content Strategy", "Social Media Management", "SEO", "Email Marketing"],
-  "Lifestyle": ["Interior Design", "Culinary Arts", "Event Planning", "Fashion Styling", "Sustainable Living"],
-  "Photography & Video": ["Portrait Photography", "Videography", "Photo Editing", "Cinematography", "Drone Photography"],
-  "Health & Fitness": ["Personal Training", "Nutrition Planning", "Yoga Instruction", "Fitness Assessment", "Wellness Coaching"],
-  "Music": ["Music Production", "Instrument Lessons", "Vocal Coaching", "Songwriting", "Audio Engineering"],
-  "Sports": ["Sports Coaching", "Performance Training", "Technique Analysis", "Athletic Development", "Game Strategy"],
-  "Teaching & Academics": ["Tutoring", "Curriculum Development", "Research Assistance", "Language Teaching", "Test Preparation"]
+  "Business": ["Business Strategy", "Project Management", "Entrepreneurship", "Operational Efficiency", "Team Leadership", "Market Research", "Business Plan Writing", "Negotiation Skills", "Sales Training"],
+  "Finance & Accounting": ["Financial Analysis", "Bookkeeping", "Tax Planning", "Investment Strategy", "Financial Modeling", "Risk Management", "QuickBooks", "Forensic Accounting", "Payroll Services"],
+  "IT & Software": ["Web Development", "Mobile App Development", "Software Engineering", "Cloud Architecture", "DevOps", "Cybersecurity", "Database Management", "Python Programming", "JavaScript Frameworks", "Network Administration"],
+  "Office Productivity": ["Microsoft Excel", "Google Workspace", "Data Entry", "Virtual Assistance", "Presentation Design", "Microsoft PowerPoint", "Slack Administration", "Notion Setup"],
+  "Personal Development": ["Life Coaching", "Time Management", "Public Speaking", "Mindfulness", "Goal Setting", "Career Coaching", "Communication Skills", "Emotional Intelligence", "Leadership Training"],
+  "Design": ["Graphic Design", "UI/UX Design", "Brand Identity", "Illustration", "Motion Graphics", "Logo Design", "Adobe Photoshop", "Figma Prototyping", "Web Design"],
+  "Art": ["Painting", "Drawing", "Sculpture", "Digital Art", "Mixed Media", "Pottery", "Printmaking", "Art History Tutoring", "Calligraphy"],
+  "Marketing": ["Digital Marketing", "Content Strategy", "Social Media Management", "SEO", "Email Marketing", "PPC Advertising", "Brand Strategy", "Copywriting", "Marketing Analytics"],
+  "Lifestyle": ["Interior Design", "Culinary Arts", "Event Planning", "Fashion Styling", "Sustainable Living", "Gardening Advice", "Personal Organization", "Travel Planning", "Pet Care Tips"],
+  "Photography & Video": ["Portrait Photography", "Videography", "Photo Editing", "Cinematography", "Drone Photography", "Wedding Photography", "Product Photography", "Video Editing (Premiere Pro)", "Animation"],
+  "Health & Fitness": ["Personal Training", "Nutrition Planning", "Yoga Instruction", "Fitness Assessment", "Wellness Coaching", "Meditation Guidance", "Strength Training", "Pilates Classes", "Sports Massage"],
+  "Music": ["Music Production", "Instrument Lessons (Guitar, Piano, etc.)", "Vocal Coaching", "Songwriting", "Audio Engineering", "Music Theory Tutoring", "DJ Lessons", "Mixing and Mastering"],
+  "Sports": ["Sports Coaching (Soccer, Basketball, etc.)", "Performance Training", "Technique Analysis", "Athletic Development", "Game Strategy", "Sports Psychology", "Yoga for Athletes", "Referee Training"],
+  "Teaching & Academics": ["Tutoring (Math, Science, etc.)", "Curriculum Development", "Research Assistance", "Language Teaching (Spanish, French, etc.)", "Test Preparation (SAT, GRE)", "Academic Writing Support", "Thesis Advising", "Online Course Creation"]
 };
 
 const reviewTemplates = [
@@ -142,21 +161,33 @@ function getRandomPrice(min: number = 25, max: number = 150): number {
 function fillTemplate(template: string, replacements: Record<string, string | number>): string {
     let result = template;
     for (const [key, value] of Object.entries(replacements)) {
-        result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
+        // Add a placeholder for date if needed
+        if (key === 'date_placeholder') {
+             const futureDate = new Date();
+             futureDate.setDate(futureDate.getDate() + getRandomNumber(7, 30)); // 1-4 weeks in the future
+             result = result.replace(`{${key}}`, futureDate.toLocaleDateString());
+        } else {
+            result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
+        }
     }
     return result;
 }
 
 
-// --- Data Generation Functions (With "Empty Array" Fix) ---
-function generateFakeListing(userId: string, username: string): FakeListingData {
-    const template = getRandomItem(listingTemplates);
-    const categoriesForTemplate = template.categories?.length > 0 ? template.categories : ['Business'];
-    const category = getRandomItem(categoriesForTemplate, 'Business');
+// --- Data Generation Functions (With "Empty Array" Fix & Category Override) ---
+/**
+ * Generates fake listing data for a specific user and category.
+ * @param userId - The ID of the user creating the listing.
+ * @param username - The username of the user creating the listing.
+ * @param category - The specific category for this listing.
+ * @returns Fake listing data object.
+ */
+function generateFakeListing(userId: string, username: string, category: string): FakeListingData {
+    const template = getRandomItem(listingTemplates); // Choose a random template structure
     const categorySkillList = categorySkills[category];
     const skills = (categorySkillList && categorySkillList.length > 0) ? categorySkillList : ['general services'];
 
-    // Safely generate skill2
+    // Safely generate skill2 from a random category
     const randomCategoryKey = getRandomItem(Object.keys(categorySkills));
     let skill2List = categorySkills[randomCategoryKey] ?? [];
     if (skill2List.length === 0) skill2List = ['general skill'];
@@ -164,27 +195,30 @@ function generateFakeListing(userId: string, username: string): FakeListingData 
 
     const replacements: Record<string, string | number> = {
         username,
-        skill: getRandomItem(skills, 'default skill'),
-        skill1: getRandomItem(skills, 'related skill'),
+        skill: getRandomItem(skills, 'default skill'), // Use skills from the specified category
+        skill1: getRandomItem(skills, 'related skill'), // Use skills from the specified category
         skill2: skill2,
         years: getRandomNumber(1, 15),
-        specialty: getRandomItem(skills, 'core specialty'),
-        specialty1: getRandomItem(skills, 'spec 1'),
-        specialty2: getRandomItem(skills, 'spec 2'),
-        specialty3: getRandomItem(skills, 'spec 3'),
-        approach: getRandomItem(["practical", "theoretical", "hands-on"], "practical"),
-        tools: getRandomItem(["standard software", "latest tech", "custom tools"], "standard software"),
-        problem: getRandomItem(["complex projects", "specific issues", "strategic goals"], "specific issues"),
-        offering: getRandomItem(["consultations", "tutorials", "solutions", "guidance"], "consultations"),
-        receiving: getRandomItem(["assistance", "creative input", "advice", "expertise"], "assistance"),
-        materials: getRandomItem(["resources", "exercises", "feedback", "examples"], "resources")
+        specialty: getRandomItem(skills, 'core specialty'), // Use skills from the specified category
+        specialty1: getRandomItem(skills, 'spec 1'), // Use skills from the specified category
+        specialty2: getRandomItem(skills, 'spec 2'), // Use skills from the specified category
+        specialty3: getRandomItem(skills, 'spec 3'), // Use skills from the specified category
+        approach: getRandomItem(["practical", "theoretical", "hands-on", "results-driven", "collaborative"], "practical"),
+        tools: getRandomItem(["standard software", "latest tech", "custom tools", "industry-specific platforms", "open-source alternatives"], "standard software"),
+        problem: getRandomItem(["complex projects", "specific technical issues", "strategic business goals", "creative blocks", "learning challenges"], "specific issues"),
+        offering: getRandomItem(["consultations", "full project delivery", "training sessions", "custom development", "strategic guidance"], "consultations"),
+        receiving: getRandomItem(["technical assistance", "creative input", "strategic advice", "domain expertise", "design feedback"], "assistance"),
+        materials: getRandomItem(["detailed resources", "practical exercises", "constructive feedback", "real-world examples", "video tutorials"], "resources"),
+        date_placeholder: '' // Placeholder, will be filled by fillTemplate helper
     };
+
     const price: number | undefined = template.listing_type !== "Trading Skills" ? getRandomPrice() : undefined;
+
     return {
         title: fillTemplate(template.title, replacements),
         description: fillTemplate(template.description, replacements),
         listing_type: template.listing_type,
-        category,
+        category, // Use the provided category
         price: price ?? undefined, // Use undefined for optional number
         user_id: userId
     };
@@ -318,9 +352,10 @@ async function createFakeData(): Promise<void> {
     const createdListings: CreatedListingInfo[] = [];
     let createdReviewCount = 0;
     const verifiedUserIds: string[] = []; // Track users whose profiles are confirmed
+    const listingsPerCategory = 50; // Minimum listings per category
 
     try {
-        console.log("Starting fake data generation (with embeddings)...");
+        console.log(`Starting fake data generation (target: ${listingsPerCategory} listings/category)...`);
 
         // 1. Ensure Profiles Exist (Requires Auth Users to exist already)
         console.log("Ensuring user profiles exist/are updated...");
@@ -329,7 +364,6 @@ async function createFakeData(): Promise<void> {
             if (await ensureProfileExists(user)) {
                  verifiedUserIds.push(user.id); // Use the ID from the user array
                  profileSuccessCount++;
-                 // console.log(`Profile OK for ${user.username} (${user.id})`); // Less verbose
             } else {
                  console.error(`Profile step FAILED for ${user.username} (ID: ${user.id}). Ensure this user exists in Supabase Auth!`);
             }
@@ -340,30 +374,49 @@ async function createFakeData(): Promise<void> {
              return;
         }
 
-        // 2. Create Listings (Only for users whose profiles were verified)
-        console.log(`\nCreating listings for ${profileSuccessCount} users...`);
-        const usersToProcess = users.filter(u => verifiedUserIds.includes(u.id));
+        // 2. Create Listings (Iterate through categories)
+        console.log(`\nCreating listings for ${Object.keys(categorySkills).length} categories...`);
+        const usersWithData = users.filter(u => verifiedUserIds.includes(u.id)); // Use only verified users
 
-        for (const user of usersToProcess) {
-            const numListings = getRandomNumber(2, 4);
-            // console.log(`Creating ${numListings} listings for user: ${user.username} (${user.id})`); // Less verbose
-            for (let i = 0; i < numListings; i++) {
-                const listingData = generateFakeListing(user.id, user.username);
+        for (const category of Object.keys(categorySkills)) {
+            console.log(` -> Generating ${listingsPerCategory} listings for category: ${category}`);
+            for (let i = 0; i < listingsPerCategory; i++) {
+                // Assign listing to a random verified user
+                const randomUser = getRandomItem(usersWithData);
+                if (!randomUser) {
+                    console.warn("Could not select a random user, skipping listing.");
+                    continue;
+                }
+
+                const listingData = generateFakeListing(randomUser.id, randomUser.username, category);
                 const listing = await createListing(listingData); // Calls original + embedding
                 if (listing) {
-                    let skill = listing.category || "service";
-                    const titleMatch = listing.title.toLowerCase(); if (titleMatch.includes("services")) skill = titleMatch.split(" services")[0]; else if (titleMatch.includes("lessons")) skill = titleMatch.split(" lessons")[0]; else if (titleMatch.includes("consultant")) skill = titleMatch.split(" consultant")[0].replace('professional ', ''); else if (titleMatch.includes("expert")) skill = titleMatch.split(" expert")[0].replace('looking for ', '');
-                    createdListings.push({ ...listing, skill, owner_id: user.id, owner_username: user.username });
-                    // console.log(` -> Created listing: ${listing.title.substring(0, 50)}...`); // Less verbose
+                    // Extract a representative skill name (simplified)
+                    let skill = category; // Default to category name
+                    const titleMatch = listing.title.toLowerCase();
+                    if (titleMatch.includes("services")) skill = titleMatch.split(" services")[0];
+                    else if (titleMatch.includes("lessons")) skill = titleMatch.split(" lessons")[0];
+                    else if (titleMatch.includes("consultant")) skill = titleMatch.split(" consultant")[0].replace('professional ', '');
+                    else if (titleMatch.includes("expert")) skill = titleMatch.split(" expert")[0].replace('looking for ', '');
+
+                    createdListings.push({
+                        ...listing,
+                        skill,
+                        owner_id: randomUser.id,
+                        owner_username: randomUser.username
+                    });
                 }
+                 // Optional: Add a small delay to avoid hitting rate limits too quickly
+                 // await new Promise(resolve => setTimeout(resolve, 50)); // e.g., 50ms delay
             }
+             console.log(`    -> Finished category: ${category}`);
         }
-        console.log(`Finished creating ${createdListings.length} listings.`);
+        console.log(`Finished creating ${createdListings.length} total listings.`);
 
         // 3. Create Reviews (Only using verified users)
         console.log(`\nCreating reviews for ${createdListings.length} listings...`);
         for (const listing of createdListings) {
-            const numReviews = getRandomNumber(0, 3);
+            const numReviews = getRandomNumber(0, 3); // Keep review count low to avoid too much data
             if (numReviews === 0) continue;
 
              const potentialReviewerIds = verifiedUserIds.filter(id => id !== listing.owner_id);
@@ -373,7 +426,9 @@ async function createFakeData(): Promise<void> {
              let attempts = 0;
              const maxReviewers = Math.min(numReviews, potentialReviewerIds.length);
              while (reviewerIds.size < maxReviewers && attempts < users.length * 2) {
-                 const randomReviewerId = getRandomItem(potentialReviewerIds); reviewerIds.add(randomReviewerId); attempts++;
+                 const randomReviewerId = getRandomItem(potentialReviewerIds);
+                 if(randomReviewerId) reviewerIds.add(randomReviewerId); // Check if randomReviewerId is defined
+                 attempts++;
              }
 
             for (const reviewerId of reviewerIds) {
@@ -384,6 +439,8 @@ async function createFakeData(): Promise<void> {
                     const review = await createReview(reviewData); // Calls original + embedding
                     if (review) createdReviewCount++;
                  }
+                 // Optional delay
+                 // await new Promise(resolve => setTimeout(resolve, 50));
             }
         }
         console.log(`Finished creating ${createdReviewCount} reviews.`);

@@ -66,31 +66,35 @@
   width: 100%;
 }
 
+/* Updated search input styles to match navbar */
 .searchInput {
-  border: 1px solid var(--input-border);
-  border-right: none;
-  background-color: var(--body-bg);
-  padding: 10px 15px;
+  background-color: #fff;
+  border: 1px solid var(--navbar-bg);
   border-radius: 5px 0 0 5px;
+  padding: 10px 15px;
   font-family: 'Roboto', sans-serif;
+  transition: all 0.3s ease-in-out;
 }
 
-.searchInput:focus {
-  box-shadow: none;
-  border-color: var(--hover-button);
+.searchInput:focus,
+.searchInput:hover {
+  border-color: var(--hover-button) !important;
+  outline: none;
+  box-shadow: 0 0 0 1px var(--hover-button);
 }
 
 .searchButton {
-  background-color: var(--hover-button);
-  border-color: var(--hover-button);
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
   border-radius: 0 5px 5px 0;
   padding: 0 15px;
+  transition: all 0.3s ease-in-out;
 }
 
 .searchButton:hover,
 .searchButton:focus {
-  background-color: var(--hover-header);
-  border-color: var(--hover-header);
+  background-color: var(--hover-button);
+  border-color: var(--hover-button);
 }
 
 .filterContainer {
@@ -109,8 +113,8 @@
 }
 
 .dropdownToggle {
-  background-color: var(--body-bg) !important;
-  border: 1px solid var(--input-border) !important;
+  background-color: #fff !important;
+  border: 1px solid var(--navbar-bg) !important;
   border-radius: 5px;
   padding: 8px 15px !important;
   font-size: 0.95rem;
@@ -118,11 +122,13 @@
   box-shadow: none !important;
   width: 100%;
   text-align: left;
+  transition: all 0.3s ease-in-out;
 }
 
 .dropdownToggle:hover,
 .dropdownToggle:focus {
   border-color: var(--hover-button) !important;
+  box-shadow: 0 0 0 1px var(--hover-button);
 }
 
 .dropdownMenu {
@@ -184,6 +190,7 @@
   margin-top: 10px;
   border-color: var(--hover-button);
   color: var(--hover-button);
+  transition: all 0.3s ease-in-out;
 }
 
 .clearSearchButton:hover,

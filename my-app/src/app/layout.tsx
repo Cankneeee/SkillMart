@@ -8,6 +8,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { UserProvider } from "@/context/UserContext";
 import Chatbot from '@/components/Chatbot';
 
+// Font definitions
 const montserrat = Montserrat({
   subsets: ['latin'],
   weight: ['400', '700'],
@@ -20,11 +21,12 @@ const roboto = Roboto({
   variable: '--font-roboto',
 });
 
+// Viewport and Metadata
 export const viewport: Viewport = {
   themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1, // Prevents zooming on iOS when tapping inputs
+  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
@@ -34,10 +36,10 @@ export const metadata: Metadata = {
   },
   description: 'A skills-sharing marketplace where passionate individuals connect to exchange knowledge and services.',
   keywords: [
-    'skills marketplace', 
-    'skill sharing', 
-    'freelance', 
-    'learning platform', 
+    'skills marketplace',
+    'skill sharing',
+    'freelance',
+    'learning platform',
     'skill trading'
   ],
   manifest: '/manifest.json',
@@ -46,7 +48,6 @@ export const metadata: Metadata = {
     shortcut: '/icons/android-chrome-192x192.png',
     apple: '/icons/apple-touch-icon.png'
   },
-  // Enhanced PWA support for Apple devices
   appleWebApp: {
     capable: true,
     title: 'SkillMart',
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
     description: 'Connect, Learn, and Trade Skills with Experts',
     type: 'website',
     locale: 'en_US',
-    url: 'https://skillmart.com',
+    url: 'https://skillmart.com', // Replace with your actual domain
     siteName: 'SkillMart'
   },
   robots: {
@@ -71,10 +72,10 @@ export const metadata: Metadata = {
     }
   },
   verification: {
-    google: ''
+    google: '' // Add your Google verification code if needed
   },
   alternates: {
-    canonical: 'https://skillmart.com'
+    canonical: 'https://skillmart.com' // Replace with your actual domain
   },
   generator: 'Next.js',
   applicationName: 'SkillMart'
@@ -89,19 +90,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="format-detection" content="telephone=no" />
         <meta name="application-name" content="SkillMart" />
       </head>
+      {/* Body is styled via globals.css to handle flex layout */}
       <body>
         <AuthProvider>
           <UserProvider>
+            {/* Navbar sits outside the main growing area */}
             <NavigationBar />
-            <main className="min-h-screen">{children}</main>
+            {/* Main content area grows to fill space */}
+            {/* Removed min-h-screen class */}
+            <main>
+              {children}
+            </main>
+            {/* Other elements like Chatbot outside the main growing area */}
             <Chatbot />
-            {/* Add offline fallback notification */}
             <div id="offline-notification" style={{ display: 'none', position: 'fixed', bottom: '0', width: '100%', background: '#f8d7da', padding: '10px', textAlign: 'center', zIndex: '9999' }}>
               You are currently offline. Some features may be limited.
             </div>
           </UserProvider>
         </AuthProvider>
-        
         {/* Optional: Script to detect and notify about offline status */}
         <script dangerouslySetInnerHTML={{
           __html: `

@@ -1,3 +1,4 @@
+// src/components/BrowseCategoryListings.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,8 +10,8 @@ import Link from "next/link";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import styles from "@/styles/BrowseCategoryListings.module.css";
 import { createClient } from "@/utils/supabase/client";
-import { 
-  getListings, 
+import {
+  getListings,
   getListingTypes,
   getCategories,
   getCategoryMapping,
@@ -30,18 +31,18 @@ export default function BrowseCategoryListings() {
     const params = useParams();
     const router = useRouter();
     const pathname = usePathname();
-    
+
     // Debugging output for URL and parameters
     console.log("Current pathname:", pathname);
     console.log("URL params:", params);
-    
+
     const encodedCategory = params.category as string;
     console.log("Encoded category from URL:", encodedCategory);
-    
+
     // Implement a more robust category decoding method
     const getCategoryNameFromSlug = (slug: string): string | null => {
       console.log("Attempting to decode slug:", slug);
-      
+
       // Method 1: Try direct mapping first
       const categoryMapping = getCategoryMapping();
       console.log("Category mapping:", categoryMapping);
@@ -49,23 +50,23 @@ export default function BrowseCategoryListings() {
         console.log("Found via direct mapping:", categoryMapping[slug]);
         return categoryMapping[slug];
       }
-      
+
       // Method 2: Try case-insensitive lookup
       const lowerSlug = slug.toLowerCase();
       const lowerCaseMapping: Record<string, string> = {};
       Object.entries(categoryMapping).forEach(([key, value]) => {
         lowerCaseMapping[key.toLowerCase()] = value;
       });
-      
+
       if (lowerCaseMapping[lowerSlug]) {
         console.log("Found via case-insensitive lookup:", lowerCaseMapping[lowerSlug]);
         return lowerCaseMapping[lowerSlug];
       }
-      
+
       // Method 3: Try manual encoding of all categories to find a match
       const allCategories = getCategories();
       console.log("All categories:", allCategories);
-      
+
       for (const category of allCategories) {
         const encoded = category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '-');
         console.log(`Checking if "${encoded}" matches "${slug}"`);
@@ -74,54 +75,54 @@ export default function BrowseCategoryListings() {
           return category;
         }
       }
-      
+
       console.log("No category match found for slug:", slug);
       return null;
     };
-    
+
     // Use our robust method to find the category name
     const categoryName = getCategoryNameFromSlug(encodedCategory);
     console.log("Final decoded category name:", categoryName);
-    
+
     // State for loading and error
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     // State for filters and search
     const [selectedListingType, setSelectedListingType] = useState("All Types");
     const [searchQuery, setSearchQuery] = useState("");
-    // New state for applied search query
-    const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
-    
+    const [currentSearchQuery, setCurrentSearchQuery] = useState(""); // Add this state for the active search
+
     // State for listings
     const [filteredListings, setFilteredListings] = useState<Listing[]>([]);
-    const [listingMetadata, setListingMetadata] = useState<Record<string, { 
-      authorName: string, 
+    const [allListings, setAllListings] = useState<Listing[]>([]); // Store all listings
+    const [listingMetadata, setListingMetadata] = useState<Record<string, {
+      authorName: string,
       authorProfilePic?: string,
       rating: number,
       reviewCount: number
     }>>({});
-    
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(8);
+    const [itemsPerPage] = useState(20); // Changed from 8 to 20
     const [totalPages, setTotalPages] = useState(1);
-    
+
     // Get listing type options from database
     const listingTypeOptions = getListingTypes();
-    
+
     useEffect(() => {
       console.log("Checking if redirect needed");
       console.log("- categoryName:", categoryName);
       console.log("- encodedCategory:", encodedCategory);
-      
+
       // Only redirect if we have an encoded category but couldn't decode it
       if (!categoryName && encodedCategory) {
         console.log("No matching category found, redirecting to /browse");
         router.push('/browse');
       }
     }, [categoryName, encodedCategory, router]);
-    
+
     // If no category name (and we're not yet redirecting), show a loading state
     if (!categoryName) {
       return (
@@ -132,48 +133,51 @@ export default function BrowseCategoryListings() {
         </div>
       );
     }
-    
+
     // Fetch listings based on category and filters
     const fetchListings = useCallback(async () => {
       try {
         console.log("Fetching listings for category:", categoryName);
         setIsLoading(true);
         setError(null);
-        
+
         // Get listings filtered by category and listing type
         const fetchedListings = await getListings(
           selectedListingType !== "All Types" ? selectedListingType : undefined,
           categoryName
         );
-        
+
         console.log(`Found ${fetchedListings.length} listings for category ${categoryName}`);
         
-        // Apply search filter if needed - using appliedSearchQuery instead of searchQuery
-        const searchFiltered = appliedSearchQuery 
-          ? fetchedListings.filter(listing => 
-              listing.title.toLowerCase().includes(appliedSearchQuery.toLowerCase()) ||
-              listing.description.toLowerCase().includes(appliedSearchQuery.toLowerCase())
+        // Store all fetched listings
+        setAllListings(fetchedListings);
+
+        // Apply search filter if there's an active search query
+        const searchFiltered = currentSearchQuery
+          ? fetchedListings.filter(listing =>
+              listing.title.toLowerCase().includes(currentSearchQuery.toLowerCase()) ||
+              listing.description.toLowerCase().includes(currentSearchQuery.toLowerCase())
             )
           : fetchedListings;
-        
+
         setFilteredListings(searchFiltered);
         setTotalPages(Math.max(1, Math.ceil(searchFiltered.length / itemsPerPage)));
         setCurrentPage(1); // Reset to first page when filters change
-        
+
         // Fetch metadata for each listing in parallel (batch in groups of 10 to avoid overwhelming the DB)
         const batchSize = 10;
         const metadataRecord: Record<string, any> = {};
-        
+
         for (let i = 0; i < searchFiltered.length; i += batchSize) {
           const batch = searchFiltered.slice(i, i + batchSize);
-          
+
           const batchPromises = batch.map(async (listing) => {
             try {
               const [ownerProfile, ratingData] = await Promise.all([
                 getUserProfile(listing.user_id),
                 getListingRating(listing.id)
               ]);
-              
+
               return {
                 listingId: listing.id,
                 authorName: ownerProfile?.username || "Unknown User",
@@ -191,9 +195,9 @@ export default function BrowseCategoryListings() {
               };
             }
           });
-          
+
           const batchResults = await Promise.all(batchPromises);
-          
+
           // Add batch results to metadata record
           batchResults.forEach(item => {
             metadataRecord[item.listingId] = {
@@ -204,9 +208,9 @@ export default function BrowseCategoryListings() {
             };
           });
         }
-        
+
         setListingMetadata(metadataRecord);
-        
+
       } catch (err: any) {
         console.error("Error fetching listings:", err);
         setError(err.message || "Failed to load listings");
@@ -214,65 +218,68 @@ export default function BrowseCategoryListings() {
       } finally {
         setIsLoading(false);
       }
-    }, [selectedListingType, appliedSearchQuery, categoryName, itemsPerPage]);
-    
-    // Initial fetch on component mount and when filters change
+    }, [selectedListingType, currentSearchQuery, categoryName, itemsPerPage]);
+
+    // Effect for listing type changes
     useEffect(() => {
       if (categoryName) {
         fetchListings();
       }
-    }, [fetchListings, categoryName]);
+    }, [selectedListingType, categoryName, fetchListings]);
     
+    // Apply search filter manually only when form is submitted
+    const applySearchFilter = () => {
+      setCurrentSearchQuery(searchQuery);
+    };
+
     // Handler for dropdown selection
     const handleListingTypeSelect = (eventKey: string | null) => {
       if (eventKey) {
         setSelectedListingType(eventKey);
       }
     };
-  
-    // Handle search input
+
+    // Handle search input - only update the input state, not filtering yet
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
-      // No longer immediately updating appliedSearchQuery
     };
-  
-    // Handle search form submission
+
+    // Handle search form submission - this is where we actually apply the filter
     const handleSearchSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      // Only apply the search when form is submitted
-      setAppliedSearchQuery(searchQuery);
+      applySearchFilter();
     };
-  
+
     // Clear search query
     const handleClearSearch = () => {
       setSearchQuery("");
-      setAppliedSearchQuery(""); // Also clear the applied search
+      setCurrentSearchQuery("");
     };
-  
+
     // Reset listing type filter
     const handleResetFilter = () => {
       setSelectedListingType("All Types");
     };
-  
+
     // Pagination handlers
     const handlePageChange = (pageNumber: number) => {
       setCurrentPage(pageNumber);
     };
-  
+
     // Get current listings based on pagination
     const getCurrentListings = () => {
       const indexOfLastItem = currentPage * itemsPerPage;
       const indexOfFirstItem = indexOfLastItem - itemsPerPage;
       return filteredListings.slice(indexOfFirstItem, indexOfLastItem);
     };
-  
+
     // Create pagination items
     const renderPaginationItems = () => {
       let items = [];
       for (let number = 1; number <= totalPages; number++) {
         items.push(
-          <Pagination.Item 
-            key={number} 
+          <Pagination.Item
+            key={number}
             active={number === currentPage}
             onClick={() => handlePageChange(number)}
           >
@@ -282,7 +289,7 @@ export default function BrowseCategoryListings() {
       }
       return items;
     };
-  
+
     // Show loading state
     if (isLoading) {
       return (
@@ -293,7 +300,7 @@ export default function BrowseCategoryListings() {
         </div>
       );
     }
-  
+
     // Show error state
     if (error) {
       return (
@@ -309,10 +316,10 @@ export default function BrowseCategoryListings() {
         </div>
       );
     }
-  
+
     // Get the current page of listings
     const currentListings = getCurrentListings();
-  
+
     return (
       <div className={styles.pageContainer}>
         <Container>
@@ -327,7 +334,7 @@ export default function BrowseCategoryListings() {
                 ({filteredListings.length} listing{filteredListings.length !== 1 ? 's' : ''})
               </span>
             </div>
-            
+
             <div className={styles.headerActions}>
               <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
                 <InputGroup>
@@ -342,7 +349,7 @@ export default function BrowseCategoryListings() {
                   </Button>
                 </InputGroup>
               </form>
-              
+
               <div className={styles.filterContainer}>
                 <span className={styles.filterLabel}>Filter by:</span>
                 <Dropdown onSelect={handleListingTypeSelect}>
@@ -351,8 +358,8 @@ export default function BrowseCategoryListings() {
                   </Dropdown.Toggle>
                   <Dropdown.Menu className={styles.dropdownMenu}>
                     {listingTypeOptions.map((type) => (
-                      <Dropdown.Item 
-                        key={type} 
+                      <Dropdown.Item
+                        key={type}
                         eventKey={type}
                         active={selectedListingType === type}
                         className={styles.dropdownItem}
@@ -365,7 +372,7 @@ export default function BrowseCategoryListings() {
               </div>
             </div>
           </div>
-          
+
           {filteredListings.length > 0 ? (
             <>
               <Row>
@@ -375,10 +382,10 @@ export default function BrowseCategoryListings() {
                     rating: 0,
                     reviewCount: 0
                   };
-                  
+
                   return (
                     <Col key={listing.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
-                      <ListingCard 
+                      <ListingCard
                         id={listing.id}
                         title={listing.title}
                         image={listing.image_url || "/listing-default-photo.png"}
@@ -394,7 +401,7 @@ export default function BrowseCategoryListings() {
                   );
                 })}
               </Row>
-              
+
               {totalPages > 1 && (
                 <div className={styles.paginationContainer}>
                   <Pagination>
@@ -410,15 +417,15 @@ export default function BrowseCategoryListings() {
           ) : (
             <div className={styles.emptyState}>
               <p>No listings found in this category for the selected criteria.</p>
-              {(appliedSearchQuery || selectedListingType !== "All Types") && (
+              {(currentSearchQuery || selectedListingType !== "All Types") && (
                 <p className={styles.emptyStateSubtext}>
                   Try adjusting your filters or search terms.
                 </p>
               )}
               <div className={styles.emptyStateActions}>
-                {appliedSearchQuery && (
-                  <Button 
-                    variant="outline-secondary" 
+                {currentSearchQuery && (
+                  <Button
+                    variant="outline-secondary"
                     className={styles.clearSearchButton}
                     onClick={handleClearSearch}
                   >
@@ -426,8 +433,8 @@ export default function BrowseCategoryListings() {
                   </Button>
                 )}
                 {selectedListingType !== "All Types" && (
-                  <Button 
-                    variant="outline-secondary" 
+                  <Button
+                    variant="outline-secondary"
                     className={styles.resetFilterButton}
                     onClick={handleResetFilter}
                   >

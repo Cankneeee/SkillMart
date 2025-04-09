@@ -1,3 +1,5 @@
+/* src/styles/NavigationBar.module.css */
+
 /* Navbar Container */
 .navbar {
   display: flex !important;
@@ -37,17 +39,34 @@
   color: var(--hover-header);
 }
 
-/* Navbar Links */
+/* Navbar Links (General) */
 .navLink {
   color: var(--header-text) !important;
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-base);
   text-decoration: none;
+  /* Added background-color to transition */
+  transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  padding: 8px 16px;
+  border-radius: 5px;
+  background-color: transparent; /* Default no background */
 }
 
+/* General Hover for NavLink (Text color + Default background for mobile) */
 .navLink:hover {
   color: var(--hover-header) !important;
+  /* Default hover background (likely for mobile) */
+  background-color: rgba(126, 87, 194, 0.1); /* Assuming --hover-button-rgb */
 }
+
+/* --- Override for Desktop Explore Link --- */
+/* Selects .navLink inside .desktopElements when hovered */
+.desktopElements .navLink:hover {
+    background-color: transparent !important; /* Explicitly remove background on desktop hover */
+    /* Text color change is inherited from the general .navLink:hover rule */
+}
+/* ---------------------------------------- */
+
 
 /* Navbar toggle button styling */
 .navbarToggle {
@@ -83,11 +102,11 @@
   background-color: var(--body-bg);
 }
 
-/* Search Bar Active & Hover State */
 .searchBar:focus,
 .searchBar:hover {
   border-color: var(--hover-button) !important;
   outline: none;
+  box-shadow: 0 0 0 1px var(--hover-button);
 }
 
 .searchIcon {
@@ -98,7 +117,7 @@
   color: var(--button-bg);
 }
 
-/* Right Section (Log In + Sign Up) */
+/* Right Section */
 .rightSection {
   display: flex;
   align-items: center;
@@ -106,35 +125,38 @@
   flex-shrink: 0;
 }
 
-/* Fix for Sign Up button */
-.btnSignup {
-  background-color: var(--button-bg) !important;
-  border: none;
-  color: var(--button-text) !important;
-  padding: 8px 16px;
-  border-radius: 5px;
-  font-weight: var(--font-weight-semibold);
-  text-align: center;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.btnSignup:hover {
-  background-color: var(--hover-button) !important;
-}
-
-/* Profile Dropdown */
+/* Profile Dropdown (General) */
 .profileDropdown {
   background-color: var(--navbar-bg) !important;
-  border: none;
+  border: 1px solid transparent; /* Default transparent border */
   padding: 8px 10px;
   border-radius: 5px;
   display: flex;
   align-items: center;
-  /* Use justify-content instead of gap to keep components together */
   justify-content: center;
+  /* Added border-color and box-shadow to transition */
+  transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
 }
 
-/* Profile Username */
+/* General Hover for Profile Dropdown (Border/Shadow for mobile) */
+.profileDropdown:hover,
+.profileDropdown:focus {
+   border-color: var(--hover-button) !important; /* Default border highlight */
+   box-shadow: 0 0 0 1px var(--hover-button); /* Default shadow highlight */
+}
+
+/* --- Override for Desktop Profile Dropdown --- */
+/* Selects .profileDropdown inside .desktopElements when hovered/focused */
+.desktopElements .profileDropdown:hover,
+.desktopElements .profileDropdown:focus {
+    border-color: transparent !important; /* Remove border highlight on desktop */
+    box-shadow: none !important; /* Remove shadow highlight on desktop */
+    background-color: var(--navbar-bg) !important; /* Ensure background doesn't change */
+}
+/* ------------------------------------------- */
+
+
+/* Profile Username (General) */
 .username {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
@@ -145,10 +167,16 @@
   margin-right: 10px;
 }
 
-.username:hover,
-.username:active {
+/* Text Hover for Username (Applies when dropdown is hovered) */
+/* This rule applies correctly in both desktop and mobile */
+.profileDropdown:hover .username {
   color: var(--hover-header) !important;
 }
+/* If mobile has a separate button class, keep its hover rule */
+.mobileProfileButton:hover .username {
+  color: var(--hover-header) !important;
+}
+
 
 /* Profile Picture */
 .profilePicture {
@@ -172,7 +200,7 @@
   padding: 10px 0;
 }
 
-/* Dropdown Items (Reverted Thickness) */
+/* Dropdown Items */
 .dropdownItem {
   color: var(--header-text) !important;
   font-size: var(--font-size-base) !important;
@@ -180,7 +208,7 @@
   padding: 10px 15px !important;
   width: 100% !important;
   text-align: left !important;
-  transition: color 0.3s ease-in-out;
+  transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out; /* Added background-color transition */
 }
 
 .dropdownItem:hover,
@@ -189,108 +217,151 @@
   color: var(--button-text) !important;
 }
 
+
+/* Sign Up button */
+.btnSignup {
+  background-color: var(--button-bg) !important;
+  border: none;
+  color: var(--button-text) !important;
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.btnSignup:hover {
+  background-color: var(--hover-button) !important;
+}
+
+
+/* Desktop vs Mobile Layout */
+.desktopElements {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
+.mobileElements {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* Mobile search form */
+.mobileSearchForm {
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.mobileElements .searchContainer {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Mobile action buttons */
+.mobileActionButton {
+  width: 100%;
+  padding: 10px !important;
+  border: 1px solid var(--button-bg);
+  border-radius: 5px;
+  color: var(--header-text) !important;
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.3s ease-in-out;
+}
+
+.mobileActionButton:hover {
+  color: var(--hover-header) !important;
+  border-color: var(--hover-button) !important;
+  box-shadow: 0 0 0 1px var(--hover-button);
+}
+
+.mobileSignupButton {
+  width: 100%;
+  padding: 10px !important;
+  background-color: var(--button-bg) !important;
+  border: none;
+  color: var(--button-text) !important;
+  border-radius: 5px;
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  text-decoration: none;
+}
+
+.mobileSignupButton:hover {
+  background-color: var(--hover-button) !important;
+}
+
+/* Mobile profile */
+.mobileProfileContainer {
+  width: 100%;
+}
+
+.mobileProfileButton {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--button-bg);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  color: var(--header-text);
+  transition: all 0.3s ease-in-out;
+}
+
+.mobileProfileButton:hover {
+  border-color: var(--hover-button) !important;
+  box-shadow: 0 0 0 1px var(--hover-button);
+}
+
+.mobileProfileButton::after {
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+  content: "";
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+}
+
+.mobileDropdownMenu {
+  width: 100%;
+  background-color: var(--body-bg);
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 10px 0;
+  margin-top: 5px;
+}
+
+.mobileProfileContainer .dropdown-menu {
+  position: static !important;
+  float: none !important;
+  transform: none !important;
+}
+
 /* Responsive styles */
 @media (max-width: 991.98px) {
-  /* Improved collapsed navbar styles */
   .navbar {
     padding: 10px 15px;
   }
-  
   .navContainer {
     flex-wrap: nowrap;
   }
-  
-  /* Make the navbar collapse content a flex column with proper spacing */
-  .navbar-collapse {
+  .desktopElements {
+    display: none;
+  }
+  .mobileElements {
     display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding-top: 10px;
   }
-  
-  /* Improve the explore link positioning */
-  .navLinks {
-    width: 100%;
-    margin: 0 0 10px !important;
-    padding: 5px 0;
+  .navbar-collapse.show,
+  .navbar-collapse.collapsing {
+    padding-bottom: 15px;
   }
-  
-  /* Better search bar positioning */
-  .searchForm {
-    order: 0;
-    margin: 10px 0;
-    width: 100%;
-  }
-  
-  .searchContainer {
-    width: 100%;
-    max-width: none;
-  }
-  
-  /* Improve login/signup/profile section */
-  .rightSection {
-    width: 100%;
-    justify-content: flex-start;
-    margin: 10px 0 5px;
-    padding: 5px 0;
-  }
-  
-  /* Make the profile dropdown match full width in mobile but keep contents grouped */
-  .profileDropdown {
-    display: flex;
-    width: 100%;
-    justify-content: flex-end;
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 5px;
-  }
-  
-  /* Ensure dropdown menu is full width */
-  .dropdownMenu {
-    width: 100%;
-  }
-  
-  /* Make login and signup buttons more prominent */
-  .rightSection .navLink,
-  .rightSection .btnSignup {
-    padding: 10px 15px !important;
-    display: block;
-    width: 100%;
-    text-align: center;
-  }
-  
-  /* Adjust login button in mobile */
-  .rightSection .navLink {
-    border: 1px solid var(--button-bg);
-    border-radius: 5px;
-    margin-right: 10px;
-  }
-  
-  /* Make right section use flex appropriate for buttons */
-  .rightSection:not(:has(.profileDropdown)) {
-    display: flex;
-    gap: 10px;
-  }
-
-  /* Keep username and profile icon together on all screen sizes */
-  @media (max-width: 576px) {
-    .username {
-      display: block;
-    }
-    
-    .profileDropdown {
-      justify-content: flex-end;
-    }
-
-    /* Keep the dropdown toggle button arrow with the user content */
-    .dropdown-toggle::after {
-      margin-left: 10px;
-    }
-  }
-}
-
-/* When expanded in mobile view ensure proper alignment */
-.navbar-collapse.show, 
-.navbar-collapse.collapsing {
-  padding-bottom: 15px;
 }

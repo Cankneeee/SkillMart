@@ -61,76 +61,161 @@ export default function NavigationBar() {
           
           {/* Collapsible content */}
           <Navbar.Collapse id="responsive-navbar">
-            <Nav className={`${styles.navLinks} me-auto`}>
-              <Nav.Link className={styles.navLink} onClick={() => setShowOffcanvas(true)}>
+            {/* Desktop elements */}
+            <div className={styles.desktopElements}>
+              <Nav className={`${styles.navLinks} me-auto`}>
+                <Nav.Link className={styles.navLink} onClick={() => setShowOffcanvas(true)}>
+                  Explore
+                </Nav.Link>
+              </Nav>
+            
+              <Form className={styles.searchForm} onSubmit={handleSearchSubmit}>
+                <div className={styles.searchContainer}>
+                  <FaSearch className={styles.searchIcon} />
+                  <FormControl 
+                    placeholder="Search listings or users..." 
+                    className={styles.searchBar} 
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+              </Form>
+              
+              <Nav className={styles.rightSection}>
+                {username ? (
+                  <Dropdown align="end">
+                    <Dropdown.Toggle variant="light" className={styles.profileDropdown}>
+                      <div className="d-flex align-items-center">
+                        <span className={styles.username}>{username}</span>
+                        {profilePicture ? (
+                          <Suspense fallback={<ImageSkeleton className={styles.profilePicture} />}>
+                            <Image
+                              src={profilePicture || '/default-profile.png'}
+                              alt="Profile Image"
+                              className={styles.profilePicture}
+                              width={40}  
+                              height={40}
+                              onError={() => {}}
+                              priority
+                            />
+                          </Suspense>
+                        ) : (
+                          <FaUserCircle className={styles.profileIcon} />
+                        )}
+                      </div>
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu className={styles.dropdownMenu}>
+                      <Dropdown.Item as={Link} href="/profile" className={styles.dropdownItem}>
+                        Profile
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/saved-listings" className={styles.dropdownItem}>
+                        Saved Listings
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/my-listings" className={styles.dropdownItem}>
+                        My Listings
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item onClick={handleLogout} className={styles.dropdownItem}>
+                        Log Out
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                ) : (
+                  <>
+                    <Nav.Link as={Link} href="/login" className={styles.navLink}>
+                      Log In
+                    </Nav.Link>
+                    <Nav.Link as={Link} href="/signup" className={`btn ${styles.btnSignup}`}>
+                      Sign Up
+                    </Nav.Link>
+                  </>
+                )}
+              </Nav>
+            </div>
+            
+            {/* Mobile specific layout */}
+            <div className={styles.mobileElements}>
+              {/* Search at top */}
+              <Form className={styles.mobileSearchForm} onSubmit={handleSearchSubmit}>
+                <div className={styles.searchContainer}>
+                  <FaSearch className={styles.searchIcon} />
+                  <FormControl 
+                    placeholder="Search listings or users..." 
+                    className={styles.searchBar} 
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+              </Form>
+              
+              {/* Explore button */}
+              <Nav.Link 
+                className={styles.mobileActionButton} 
+                onClick={() => {
+                  setShowOffcanvas(true);
+                  setExpanded(false);
+                }}
+              >
                 Explore
               </Nav.Link>
-            </Nav>
-            
-            {/* Search form - will be properly positioned in mobile */}
-            <Form className={styles.searchForm} onSubmit={handleSearchSubmit}>
-              <div className={styles.searchContainer}>
-                <FaSearch className={styles.searchIcon} />
-                <FormControl 
-                  placeholder="Search listings or users..." 
-                  className={styles.searchBar} 
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                />
-              </div>
-            </Form>
-            
-            {/* User controls section */}
-            <Nav className={styles.rightSection}>
+              
+              {/* User controls */}
               {username ? (
-                <Dropdown align="end" className="w-100">
-                  <Dropdown.Toggle variant="light" className={styles.profileDropdown}>
-                    <div className="d-flex align-items-center">
-                      <span className={styles.username}>{username}</span>
-                      {profilePicture ? (
-                        <Suspense fallback={<ImageSkeleton className={styles.profilePicture} />}>
-                          <Image
-                            src={profilePicture || '/default-profile.png'}
-                            alt="Profile Image"
-                            className={styles.profilePicture}
-                            width={40}  
-                            height={40}
-                            onError={() => {}}
-                            priority // Above the fold - immediate navigation element
-                          />
-                        </Suspense>
-                      ) : (
-                        <FaUserCircle className={styles.profileIcon} />
-                      )}
-                    </div>
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu className={styles.dropdownMenu}>
-                    <Dropdown.Item as={Link} href="/profile" className={styles.dropdownItem}>
-                      Profile
-                    </Dropdown.Item>
-                    <Dropdown.Item as={Link} href="/saved-listings" className={styles.dropdownItem}>
-                      Saved Listings
-                    </Dropdown.Item>
-                    <Dropdown.Item as={Link} href="/my-listings" className={styles.dropdownItem}>
-                      My Listings
-                    </Dropdown.Item>
-                    <Dropdown.Divider />
-                    <Dropdown.Item onClick={handleLogout} className={styles.dropdownItem}>
-                      Log Out
-                    </Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
+                <div className={styles.mobileProfileContainer}>
+                  <Dropdown className="w-100">
+                    <Dropdown.Toggle 
+                      as="div"
+                      id="mobile-profile-dropdown"
+                      className={styles.mobileProfileButton}
+                    >
+                      <div className="d-flex align-items-center justify-content-center">
+                        <span className={styles.username}>{username}</span>
+                        {profilePicture ? (
+                          <Suspense fallback={<ImageSkeleton className={styles.profilePicture} />}>
+                            <Image
+                              src={profilePicture || '/default-profile.png'}
+                              alt="Profile Image"
+                              className={styles.profilePicture}
+                              width={40}  
+                              height={40}
+                              onError={() => {}}
+                              priority
+                            />
+                          </Suspense>
+                        ) : (
+                          <FaUserCircle className={styles.profileIcon} />
+                        )}
+                      </div>
+                    </Dropdown.Toggle>
+                    
+                    <Dropdown.Menu className={styles.mobileDropdownMenu}>
+                      <Dropdown.Item as={Link} href="/profile" className={styles.dropdownItem}>
+                        Profile
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/saved-listings" className={styles.dropdownItem}>
+                        Saved Listings
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} href="/my-listings" className={styles.dropdownItem}>
+                        My Listings
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item onClick={handleLogout} className={styles.dropdownItem}>
+                        Log Out
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </div>
               ) : (
                 <>
-                  <Nav.Link as={Link} href="/login" className={styles.navLink}>
+                  <Nav.Link as={Link} href="/login" className={styles.mobileActionButton}>
                     Log In
                   </Nav.Link>
-                  <Nav.Link as={Link} href="/signup" className={`btn ${styles.btnSignup}`}>
+                  <Nav.Link as={Link} href="/signup" className={styles.mobileSignupButton}>
                     Sign Up
                   </Nav.Link>
                 </>
               )}
-            </Nav>
+            </div>
           </Navbar.Collapse>
         </Container>
       </Navbar>

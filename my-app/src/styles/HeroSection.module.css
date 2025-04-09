@@ -1,49 +1,61 @@
+/* src/styles/HeroSection.module.css */
+
 .hero {
+  display: flex; /* Enable Flexbox */
+  align-items: center; /* Vertically center content */
+  justify-content: center; /* Horizontally center content */
+  width: 100%; /* Ensure it takes width within the main container */
+  padding: 40px 20px; /* Padding for spacing inside the hero */
   text-align: center;
-  padding: 60px 20px;
-  background-color: #F9F7F7; /* Updated background color */
+  background-color: #F9F7F7;
 }
-  
-  /* Main Title */
-  .hero h1 {
-    font-size: 2.8rem;
-    font-weight: bold;
-    color: var(--header-text);
-    margin-bottom: 20px;
-  }
-  
-  /* Highlighted SkillMart Text */
-  .highlight {
-    color: var(--button-bg);
-  }
-  
-  /* Short Subtitle */
-  .hero p {
-    font-size: 1.2rem;
-    color: var(--header-text);
-    margin-bottom: 10px;
-  }
-  
-  /* Description Text */
-  .description {
-    font-size: 1rem;
-    color: var(--header-text);
-    opacity: 0.8;
-    margin-bottom: 20px;
-  }
-  
-  /* Call-to-Action Button */
-  .ctaButton {
-    background-color: var(--button-bg);
-    color: var(--button-text);
-    padding: 12px 24px;
-    font-size: 1.2rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  
-  .ctaButton:hover {
-    background-color: var(--hover-button);
-  }
+
+/* Ensure the content div takes appropriate width */
+.content {
+    max-width: 800px; /* Limit content width for readability */
+    width: 100%;
+}
+
+/* Main Title */
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: bold;
+  color: var(--header-text);
+  margin-bottom: 20px;
+}
+
+/* Highlighted SkillMart Text */
+.highlight {
+  color: var(--button-bg);
+}
+
+/* Short Subtitle */
+.hero p {
+  font-size: 1.2rem;
+  color: var(--header-text);
+  margin-bottom: 10px;
+}
+
+/* Description Text */
+.description {
+  font-size: 1rem;
+  color: var(--header-text);
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+/* Call-to-Action Button */
+.ctaButton {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.ctaButton:hover {
+  background-color: var(--hover-button);
+}
