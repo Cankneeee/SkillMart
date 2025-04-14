@@ -7,6 +7,8 @@ import NavigationBar from '@/components/NavigationBar';
 import { AuthProvider } from '@/context/AuthContext';
 import { UserProvider } from "@/context/UserContext";
 import Chatbot from '@/components/Chatbot';
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 
 // Font definitions
 const montserrat = Montserrat({
@@ -121,6 +123,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }
           `
         }} />
+        <SpeedInsights />
       </body>
     </html>
   );
