@@ -8,6 +8,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { UserProvider } from "@/context/UserContext";
 import Chatbot from '@/components/Chatbot';
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/react"
 
 
 // Font definitions
@@ -124,6 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           `
         }} />
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
