@@ -12,6 +12,10 @@ This repository contains a complete web application with the following component
 - OpenAI API integration for AI features
 - Comprehensive documentation and diagrams
 
+## 🌐 Live Demo
+
+Check out the deployed application: [skill-mart-olive.vercel.app](https://skill-mart-olive.vercel.app)
+
 ## 📊 Documentation
 
 All project documentation can be found in the respective directories:
