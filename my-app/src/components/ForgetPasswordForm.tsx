@@ -30,7 +30,7 @@ export default function ForgetPasswordForm() {
       // Use the reset password utility
       const { error: resetError } = await resetPassword(
         email.trim().toLowerCase(), 
-        'http://localhost:3000/reset-password'
+        'https://skill-mart-olive.vercel.app/reset-password'
       );
 
       if (resetError) {
